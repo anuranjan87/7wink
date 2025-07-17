@@ -23,7 +23,7 @@ export async function getWebsiteContent(username: string): Promise<string | null
       return null
     }
 
-    // Get the HTML content from the website table
+    // Get the HTML content from the website table (latest entry)
     const result = await sql.query(`
       SELECT html_content 
       FROM ${tableName} 
@@ -39,6 +39,32 @@ export async function getWebsiteContent(username: string): Promise<string | null
   } catch (error) {
     console.error("Error fetching website content:", error)
     return null
+  }
+}
+
+export async function updateWebsiteContent(username: string, htmlContent: string) {
+  try {
+    const tableName = `${username.toLowerCase()}_website`
+
+    // Insert new HTML content (this creates a new version)
+    await sql.query(
+      `
+      INSERT INTO ${tableName} (html_content) 
+      VALUES ($1)
+    `,
+      [htmlContent],
+    )
+
+    return {
+      success: true,
+      message: "Website content updated successfully!",
+    }
+  } catch (error) {
+    console.error("Error updating website content:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update website content",
+    }
   }
 }
 

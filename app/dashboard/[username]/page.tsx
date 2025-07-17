@@ -1,9 +1,9 @@
-import { getWebsiteContent, getVisitCount } from "@/lib/website-actions"
+import { getVisitCount } from "@/lib/website-actions"
 import { notFound } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ExternalLink, Eye } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ExternalLink, Edit, BarChart3 } from "lucide-react"
+import Link from "next/link"
 
 interface PageProps {
   params: {
@@ -11,95 +11,95 @@ interface PageProps {
   }
 }
 
-export default async function UserDashboard({ params }: PageProps) {
+export default async function DashboardPage({ params }: PageProps) {
   const { username } = params
 
   try {
-    // Check if the website exists
-    const content = await getWebsiteContent(username)
-    if (!content) {
-      notFound()
-    }
-
-    // Get visit count
     const visitCount = await getVisitCount(username)
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard for {username}</h1>
-            <p className="text-gray-600">Monitor your website analytics and performance</p>
+            <p className="text-gray-600">Monitor your website performance and manage content</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
             {/* Website Link Card */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
                   <ExternalLink className="h-5 w-5" />
-                  Your Website
+                  Live Website
                 </CardTitle>
-                <CardDescription>Visit your live website</CardDescription>
+                <CardDescription>Visit your published website</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild className="w-full">
-                  <Link href={`/${username}`} target="_blank">
+                  <Link href={`/${username}`} target="_blank" rel="noopener noreferrer">
                     Visit /{username}
-                    <ExternalLink className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Visit Analytics Card */}
+            {/* Edit Website Card */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Website Analytics
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  Edit Website
                 </CardTitle>
-                <CardDescription>Track your website performance</CardDescription>
+                <CardDescription>Modify your website code</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-gray-600">Total Visits</span>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-gray-900">{visitCount}</span>
-                  <span className="text-sm text-gray-500 ml-2">visits</span>
-                </div>
+                <Button asChild variant="outline" className="w-full bg-transparent">
+                  <Link href={`/edit/${username}`}>Edit Code</Link>
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Website Status Card */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Website Status</CardTitle>
-                <CardDescription>Current status of your website</CardDescription>
+            {/* Analytics Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Total Visits
+                </CardTitle>
+                <CardDescription>Website visit analytics</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Website is live and accessible</span>
-                </div>
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    <strong>Website URL:</strong>{" "}
-                    <Link href={`/${username}`} className="text-blue-600 hover:underline" target="_blank">
-                      /{username}
-                    </Link>
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>Created:</strong> Website and tracking are active
-                  </p>
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-2xl font-bold text-gray-900">{visitCount}</span>
+                  <span className="text-gray-600">visits</span>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Manage your website efficiently</CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-4">
+              <Button asChild>
+                <Link href={`/${username}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Live Site
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href={`/edit/${username}`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Website
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -109,12 +109,12 @@ export default async function UserDashboard({ params }: PageProps) {
   }
 }
 
-// Generate metadata for the dashboard
+// Generate metadata for the page
 export async function generateMetadata({ params }: PageProps) {
   const { username } = params
 
   return {
     title: `${username}'s Dashboard`,
-    description: `Analytics dashboard for ${username}'s website`,
+    description: `Dashboard for ${username}'s website`,
   }
 }
