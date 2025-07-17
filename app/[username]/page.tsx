@@ -33,6 +33,6 @@ export async function generateMetadata({ params }: PageProps) {
 
   return {
     title: `${username}'s Website`,
-    description: `Personal website for ${username}`,
+    description: `Website for ${username}`,
   }
 }

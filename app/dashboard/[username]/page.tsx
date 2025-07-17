@@ -1,8 +1,5 @@
 import { getVisitCount } from "@/lib/website-actions"
 import { notFound } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ExternalLink, Edit, BarChart3 } from "lucide-react"
 import Link from "next/link"
 
 interface PageProps {
@@ -18,88 +15,57 @@ export default async function DashboardPage({ params }: PageProps) {
     const visitCount = await getVisitCount(username)
 
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard for {username}</h1>
-            <p className="text-gray-600">Monitor your website performance and manage content</p>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard for {username}</h1>
+              <Link
+                href="/"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Back to Home
+              </Link>
+            </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            {/* Website Link Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ExternalLink className="h-5 w-5" />
-                  Live Website
-                </CardTitle>
-                <CardDescription>Visit your published website</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full">
-                  <Link href={`/${username}`} target="_blank" rel="noopener noreferrer">
-                    Visit /{username}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Website Link */}
+              <div className="bg-blue-50 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-blue-900 mb-2">Your Website</h2>
+                <p className="text-blue-700 mb-4">Visit your live website</p>
+                <Link
+                  href={`/${username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Visit /{username}
+                </Link>
+              </div>
 
-            {/* Edit Website Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Edit className="h-5 w-5" />
+              {/* Edit Website */}
+              <div className="bg-purple-50 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-purple-900 mb-2">Edit Website</h2>
+                <p className="text-purple-700 mb-4">Modify your website code</p>
+                <Link
+                  href={`/edit/${username}`}
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                >
                   Edit Website
-                </CardTitle>
-                <CardDescription>Modify your website code</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" className="w-full bg-transparent">
-                  <Link href={`/edit/${username}`}>Edit Code</Link>
-                </Button>
-              </CardContent>
-            </Card>
+                </Link>
+              </div>
 
-            {/* Analytics Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Total Visits
-                </CardTitle>
-                <CardDescription>Website visit analytics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
+              {/* Visit Analytics */}
+              <div className="bg-green-50 rounded-lg p-6 md:col-span-2">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-semibold text-green-900">Total Visits</h2>
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-2xl font-bold text-gray-900">{visitCount}</span>
-                  <span className="text-gray-600">visits</span>
                 </div>
-              </CardContent>
-            </Card>
+                <p className="text-green-700 mb-2">Number of times your website has been visited</p>
+                <div className="text-3xl font-bold text-green-900">{visitCount}</div>
+              </div>
+            </div>
           </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your website efficiently</CardDescription>
-            </CardHeader>
-            <CardContent className="flex gap-4">
-              <Button asChild>
-                <Link href={`/${username}`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Live Site
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={`/edit/${username}`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Website
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     )
