@@ -2,86 +2,32 @@
 
 import { neon } from "@neondatabase/serverless"
 
+import OpenAI from "openai"
+
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function getWebsiteContent(username: string): Promise<string | null> {
-  try {
-    const tableName = `${username.toLowerCase()}_website`
-
-    // Check if the table exists first
-    const tableExists = await sql.query(
-      `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = $1
-      )
-    `,
-      [tableName],
-    )
-
-    if (!tableExists[0]?.exists) {
-      return null
-    }
-
-    // Get the HTML content from the website table (latest entry)
-    const result = await sql.query(`
-      SELECT html_content 
-      FROM ${tableName} 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `)
-
-    if (result.length === 0) {
-      return null
-    }
-
-    return result[0].html_content
-  } catch (error) {
-    console.error("Error fetching website content:", error)
-    return null
-  }
+export interface WebsiteContent {
+  html: string
+  script: string
+  data: string
 }
 
-export async function updateWebsiteContent(username: string, htmlContent: string) {
-  try {
-    const tableName = `${username.toLowerCase()}_website`
 
-    // Insert new HTML content (this creates a new version)
-    await sql.query(
-      `
-      INSERT INTO ${tableName} (html_content) 
-      VALUES ($1)
-    `,
-      [htmlContent],
-    )
+const openai = new OpenAI({
+  apiKey: "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",
+})
 
-    return {
-      success: true,
-      message: "Website content updated successfully!",
-    }
-  } catch (error) {
-    console.error("Error updating website content:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update website content",
-    }
-  }
-}
 
 export async function generateCodeWithAI(currentCode: string, prompt: string) {
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer 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`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are a helpful HTML/CSS/JavaScript code assistant. You will be given existing HTML code and a user request to modify it. 
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      stream: true,
+      messages: [
+        {
+          role: "system",
+          
+          content: `You are a helpful HTML/CSS/JavaScript code assistant. You will be given existing HTML code and a user request to modify it.
 
 Rules:
 1. Always return complete, valid HTML code
@@ -94,30 +40,24 @@ Rules:
 8. Return ONLY the HTML code, no explanations or markdown formatting
 9. Make sure all HTML tags are properly closed
 10. Use modern CSS and HTML best practices`,
-          },
-          {
-            role: "user",
-            content: `Current HTML code:
-${currentCode}
-
-User request: ${prompt}
-
-Please modify the HTML code according to the user's request and return the complete updated HTML code.`,
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.7,
-      }),
+        },
+        {
+          role: "user",
+          content: `Current HTML code:\n${currentCode}\n\nUser request: ${prompt}\n\nPlease modify the HTML code according to the user's request and return the complete updated HTML code.`,
+        },
+      ],
+      max_tokens: 4000,
+      temperature: 1,
     })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error?.message || "OpenAI API request failed")
-    }
+let generatedCode = '';
 
-    const data = await response.json()
-    const generatedCode = data.choices[0]?.message?.content
-
+for await (const chunk of completion) {
+  const content = chunk.choices[0]?.delta?.content;
+  if (content) {
+    generatedCode += content;
+  }
+}
     if (!generatedCode) {
       throw new Error("No code generated from OpenAI")
     }
@@ -135,6 +75,102 @@ Please modify the HTML code according to the user's request and return the compl
   }
 }
 
+
+export async function getWebsiteContent(username: string): Promise<WebsiteContent | null> {
+  try {
+    const tableName = `${username.toLowerCase()}_website`;
+
+    // Check if the table exists
+    const tableExists = await sql.query(
+      `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = $1
+      )
+    `,
+      [tableName]
+    );
+
+    if (!tableExists[0]?.exists) {
+      return null;
+    }
+
+    // Get latest content
+    const result = await sql.query(
+      `SELECT code, code_script, code_data FROM ${tableName} ORDER BY created_at DESC LIMIT 1`
+    );
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return {
+      html: result[0].code || "",
+      script: result[0].code_script || "",
+      data: result[0].code_data || "",
+    };
+  } catch (error) {
+    console.error("Error fetching website content:", error);
+    return null;
+  }
+}
+
+
+export async function getWebsiteHTML(username: string): Promise<string | null> {
+  try {
+    const content = await getWebsiteContent(username)
+    if (!content) return null
+
+    // Combine HTML with inline script and data
+    let combinedHTML = content.html
+
+    // Inject data script before other scripts
+    if (content.data) {
+      const dataScript = `<script>${content.data}</script>`
+      combinedHTML = combinedHTML.replace("</head>", `${dataScript}\n</head>`)
+    }
+
+    // Replace script.js reference with inline script
+    if (content.script) {
+      const inlineScript = `<script>${content.script}</script>`
+      combinedHTML = combinedHTML.replace('<script src="script.js"></script>', inlineScript)
+    }
+
+    return combinedHTML
+  } catch (error) {
+    console.error("Error getting combined HTML:", error)
+    return null
+  }
+}
+
+
+export async function updateWebsiteContent(username: string, html: string, script: string, data: string) {
+  try {
+    const tableName = `${username.toLowerCase()}_website`
+
+    // Insert new content (creates a new version)
+    await sql.query(
+      `
+      INSERT INTO ${tableName} (code, code_script, code_data) 
+      VALUES ($1, $2, $3)
+    `,
+      [html, script, data],
+    )
+
+    return {
+      success: true,
+      message: "Website content updated successfully!",
+    }
+  } catch (error) {
+    console.error("Error updating website content:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update website content",
+    }
+  }
+}
+
+
 export async function trackVisit(username: string): Promise<void> {
   try {
     const visitsTableName = `${username.toLowerCase()}_visits`
@@ -151,6 +187,7 @@ export async function trackVisit(username: string): Promise<void> {
     console.error("Error tracking visit:", error)
   }
 }
+
 
 export async function getVisitCount(username: string): Promise<number> {
   try {
@@ -183,15 +220,67 @@ export async function getVisitCount(username: string): Promise<number> {
   }
 }
 
+
 export async function getAllUsernames(): Promise<string[]> {
   try {
-    const result = await sql`
+    const result = await sql.query(`
       SELECT name FROM alias ORDER BY created_at DESC
-    `
+    `)
 
     return result.map((row: any) => row.name)
   } catch (error) {
     console.error("Error fetching usernames:", error)
     return []
+  }
+}
+
+
+export async function getWebsiteTemplates() {
+  try {
+    const templates = await sql.query(`
+      SELECT id, name, code, code_script, code_data
+      FROM website_template
+      ORDER BY id ASC
+    `)
+
+    return templates
+  } catch (error) {
+    console.error("Failed to fetch website templates:", error)
+    return []
+  }
+}
+
+
+export async function applyTemplateToUserWebsite(username: string, templateCode: string) {
+  const sanitizedUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '')
+  const tableName = `${sanitizedUsername}_website`
+console.log("hello")
+console.log(sanitizedUsername)
+console.log(templateCode)
+  try {
+    // Insert the template code into the user's website table
+  
+
+
+
+ await sql.query(
+      `
+      INSERT INTO ${tableName} (html_content) 
+      VALUES ($1)
+    `,
+      [templateCode],
+    )
+
+    return {
+      success: true,
+      message: "Template applied successfully!",
+      username: sanitizedUsername,
+    }
+  } catch (error) {
+    console.error(`Failed to apply template for ${username}:`, error)
+    return {
+      success: false,
+      error: "Could not apply the template. Please try again.",
+    }
   }
 }

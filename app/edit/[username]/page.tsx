@@ -1,6 +1,7 @@
 import { getWebsiteContent } from "@/lib/website-actions"
 import { notFound } from "next/navigation"
 import { CodeEditor } from "@/components/code-editor"
+import  {Origami, Globe2Icon, LayoutDashboard, Link }  from "lucide-react";
 
 interface PageProps {
   params: {
@@ -13,38 +14,41 @@ export default async function EditPage({ params }: PageProps) {
 
   try {
     const content = await getWebsiteContent(username)
-
     if (!content) {
       notFound()
     }
 
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="border-b bg-white px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit {username}'s Website</h1>
-              <p className="text-sm text-gray-600">Make changes and see them live</p>
-            </div>
-            <div className="flex gap-2">
-              <a
-                href={`/${username}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                View Live Site
-              </a>
-              <a
-                href={`/dashboard/${username}`}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Dashboard
-              </a>
-            </div>
-          </div>
-        </div>
-        <CodeEditor username={username} initialContent={content} />
+      <div className="flex h-screen bg-[#030712] relative">
+        {/* Sidebar */}
+        <aside className=" w-10 p-3 border-r border-transparent flex flex-col gap-8 my-4  ">
+          <a
+            href={`/${username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center "
+          ><Globe2Icon color="grey"/>
+           
+          </a>
+          <a
+            href={`/dashboard/${username}`}
+            className="inline-flex items-center justify-center "
+          >
+            <LayoutDashboard color="grey"/>
+          </a>
+
+           <a
+            href={`/template`}
+            className="inline-flex items-center justify-center "
+          >
+            <Origami color="grey" />
+          </a>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-1">
+          <CodeEditor username={username} initialContent={content} />
+        </main>
       </div>
     )
   } catch (error) {
@@ -53,7 +57,6 @@ export default async function EditPage({ params }: PageProps) {
   }
 }
 
-// Generate metadata for the page
 export async function generateMetadata({ params }: PageProps) {
   const { username } = params
 

@@ -54,7 +54,17 @@ export default async function DashboardPage({ params }: PageProps) {
                   Edit Website
                 </Link>
               </div>
-
+              {/* Go to Templates*/}
+              <div className="bg-yellow-50 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-purple-900 mb-2">Templates</h2>
+                <p className="text-purple-700 mb-4">Modify your website using templates</p>
+                <Link
+                  href={`/templates/${username}`}
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                >
+                  View Templates
+                </Link>
+              </div>   
               {/* Visit Analytics */}
               <div className="bg-green-50 rounded-lg p-6 md:col-span-2">
                 <div className="flex items-center gap-3 mb-2">

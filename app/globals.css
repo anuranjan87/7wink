@@ -92,3 +92,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Thin the indent guides in Monaco editor */
+.monaco-editor .lines-content .indent-guide {
+  width: 1px !important;
+  background-color: rgba(128, 128, 128, 0.5) !important;
+}
+
+
+
