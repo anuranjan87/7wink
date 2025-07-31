@@ -61,7 +61,7 @@ function TemplateCard({ imageSrc, title }: { imageSrc: string; title: string }) 
           } flex items-center gap-2`}
           aria-label={`Use ${title} template`}
         >
-          Use It
+          SELECT
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
@@ -112,7 +112,7 @@ export default function Page({ params }: PageProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex flex-1 items-center justify-center px-4 py-16" style={{ zoom: 0.6 }}>
+        <main className="flex flex-1 items-center justify-center px-4 py-16" style={{ zoom: 0.8 }}>
           <div className="text-center max-w-5xl w-full">
             <h1 className="text-white text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight">
               Create your online presence. Your way.
