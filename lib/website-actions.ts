@@ -27,23 +27,26 @@ export async function generateCodeWithAI(currentCode: string, prompt: string) {
         {
           role: "system",
           
-          content: `You are a helpful HTML/CSS/JavaScript code assistant. You will be given existing HTML code and a user request to modify it.
+          content: `You are a helpful JavaScript content editing assistant. You will be given a JavaScript data object definition and a user request to modify it.
+Always return complete, valid JavaScript code.
 
-Rules:
-1. Always return complete, valid HTML code
-2. Preserve the overall structure unless specifically asked to change it
-3. Make only the changes requested by the user
-4. Include proper HTML5 structure with <!DOCTYPE html>
-5. Ensure the code is clean and well-formatted
-6. If adding styles, use inline CSS or <style> tags within the HTML
-7. If adding JavaScript, use <script> tags within the HTML
-8. Return ONLY the HTML code, no explanations or markdown formatting
-9. Make sure all HTML tags are properly closed
-10. Use modern CSS and HTML best practices`,
+Do NOT change the variable name, object keys, or structure.
+
+Only modify the content values (strings, arrays, numbers, booleans) as requested by the user.
+
+Preserve the overall skeleton and hierarchy exactly as it is.
+
+Ensure all JavaScript syntax is valid (proper commas, brackets, and quotes).
+
+Do not add or remove properties unless explicitly asked.
+
+Do not include explanations or markdown formatting — return only the updated JavaScript code.
+
+The content represents website copy, so ensure the tone and style are appropriate for web presentation.`,
         },
         {
           role: "user",
-          content: `Current HTML code:\n${currentCode}\n\nUser request: ${prompt}\n\nPlease modify the HTML code according to the user's request and return the complete updated HTML code.`,
+          content: `Current JavaScript data object code:\n${currentCode}\n\nUser request: ${prompt}\n\nPlease modify the JavaScript data object according to the user's request and return the complete JavaScript data object, also maintaig the word countsame as in current code. `,
         },
       ],
       max_tokens: 4000,
@@ -171,17 +174,16 @@ export async function updateWebsiteContent(username: string, html: string, scrip
 }
 
 
-export async function trackVisit(username: string): Promise<void> {
+export async function trackVisit(username: string, ipAddress?: string): Promise<void> {
   try {
     const visitsTableName = `${username.toLowerCase()}_visits`
-
-    // Insert a visit record
+console.log(ipAddress)
+console.log("hue hue")
+    // Insert a visit record with IP address
     await sql.query(
-      `
-      INSERT INTO ${visitsTableName} (entry, visited_at) 
-      VALUES ($1, CURRENT_TIMESTAMP)
-    `,
-      ["yes"],
+      `INSERT INTO ${visitsTableName} (entry, visited_at, ip_address) 
+      VALUES ($1, CURRENT_TIMESTAMP, $2)`,
+      ["yes", ipAddress || "unknown"],
     )
   } catch (error) {
     console.error("Error tracking visit:", error)
@@ -219,6 +221,62 @@ export async function getVisitCount(username: string): Promise<number> {
     return 0
   }
 }
+
+
+export async function getVisitChartData(username: string): Promise<
+  { date: string; visits: number }[]
+> {
+  try {
+    const visitsTableName = `${username.toLowerCase()}_visits`
+
+    // ✅ Check if the visits table exists
+    const tableExists = await sql.query(
+      `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = $1
+      )
+      `,
+      [visitsTableName],
+    )
+
+    if (!tableExists[0]?.exists) {
+      return []
+    }
+
+    // ✅ Generate daily series, pad missing days with 0, keep timestamp-style output
+    const result = await sql.query(
+      `
+      WITH date_series AS (
+        SELECT generate_series(
+          (SELECT MIN(visited_at)::date FROM ${visitsTableName}),
+          GREATEST((SELECT MAX(visited_at)::date FROM ${visitsTableName}), NOW()::date),
+          interval '1 day'
+        )::timestamp AS date
+      )
+      SELECT 
+        TO_CHAR(ds.date, 'YYYY-MM-DD HH24:MI:SS') AS date,
+        COALESCE(COUNT(v.visited_at), 0) AS visits
+      FROM date_series ds
+      LEFT JOIN ${visitsTableName} v
+        ON ds.date::date = v.visited_at::date
+      GROUP BY ds.date
+      ORDER BY ds.date
+      `,
+    )
+    console.log(result)
+
+    return result.map((row: any) => ({
+      date: row.date,
+      visits: Number(row.visits),
+    }))
+  } catch (error) {
+    console.error("Error fetching visit chart data:", error)
+    return []
+  }
+}
+
+
 
 
 export async function getAllUsernames(): Promise<string[]> {
@@ -282,5 +340,70 @@ console.log(templateCode)
       success: false,
       error: "Could not apply the template. Please try again.",
     }
+  }
+}
+
+
+
+export async function copyTemplateToUser(templateID: number, username: string) {
+  console.log("[v0] Starting copyTemplateToUser with templateID:", templateID, "username:", username)
+
+  try {
+    const templateRes = await sql.query(
+      `SELECT code, code_script, code_data 
+       FROM website_template 
+       WHERE id = $1`,
+      [templateID],
+    )
+
+    if (!templateRes || templateRes.length === 0) {
+      return { success: false, error: `Template with ID ${templateID} not found` }
+    }
+
+    const { code, code_script, code_data } = templateRes[0]
+
+    const userTable = `${username.toLowerCase()}_website`
+    await sql.query(
+      `INSERT INTO ${userTable} (code, code_script, code_data) 
+       VALUES ($1, $2, $3)`,
+      [code, code_script, code_data],
+    )
+
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] Error in copyTemplateToUser:", error)
+    return { success: false, error: String(error) }
+  }
+}
+
+
+export async function sendEnquiry(username: string, formData: FormData) {
+  const enquiryTableName = `${username}_enquiry`
+
+  // Extract values safely
+  const email = formData.get("email") as string
+  const message = formData.get("your_message") as string
+
+  // Format the form data as a single entry string
+  const entryData = `Email: ${email}, Message: ${message}`
+
+  // Insert into the user-specific enquiry table
+  await sql.query(
+    `
+    INSERT INTO ${enquiryTableName} (entry)
+    VALUES ($1)
+  `,
+    [entryData],
+  )
+
+  console.log("Enquiry inserted into database:", {
+    table: enquiryTableName,
+    entry: entryData,
+    timestamp: new Date().toISOString(),
+  })
+
+  return {
+    success: true,
+    message: "Enquiry submitted successfully",
   }
 }

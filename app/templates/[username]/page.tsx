@@ -1,132 +1,148 @@
 "use client"
 
-import { Origami, Globe2Icon, LayoutDashboard } from "lucide-react"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { ArrowRight } from "lucide-react"
-import React from "react"
+import * as React from "react"
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
-interface PageProps {
-  params: Promise<{
-    username: string
-  }>
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { type ChartConfig, ChartContainer, ChartLegend, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Template data
-const templates = [
-  {
-    id: "1",
-    imageSrc: "https://49iw5aq3b5e3nyxk.public.blob.vercel-storage.com/MDczMjE0NTNhYWVkN2Q0ODAyZWUxY2Q4YjQxMzY4MjI.jpg",
-    title: "Snow & Rainbow",
-  },
-  {
-    id: "2",
-    imageSrc: "https://49iw5AQ3b5E3NyxK.public.blob.vercel-storage.com/ZmE1NjliZWZkNmUwZjEyMGRjNWFkYTM0Yjg0NzQ0NTA.jpg",
-    title: "Elegant Craft",
-  },
-  {
-    id: "3",
-    imageSrc: "https://49iw5aq3b5e3nyxk.public.blob.vercel-storage.com/11234",
-    title: "Retro Game",
-  },
-  {
-    id: "4",
-    imageSrc: "https://49iw5aq3b5e3nyxk.public.blob.vercel-storage.com/heloaos",
-    title: "Milkshake",
-  },
-]
+// ✅ Import from website-actions (dash, not underscore)
+import { getVisitChartData } from "@/lib/website-actions"
 
-// TemplateCard Component
-function TemplateCard({ imageSrc, title }: { imageSrc: string; title: string }) {
-  const [isHovered, setIsHovered] = useState(false)
+export const description = "An interactive area chart"
+
+const chartConfig = {
+  visitors: {
+    label: "Visitors",
+  },
+  desktop: {
+    label: "Desktop",
+    color: "hsl(221, 83%, 53%)", // Blue color
+  },
+  mobile: {
+    label: "Mobile",
+    color: "hsl(213, 93%, 68%)", // Lighter blue color
+  },
+} satisfies ChartConfig
+
+export default function ChartAreaInteractive() {
+  const [timeRange, setTimeRange] = React.useState("90d")
+  const [chartData, setChartData] = React.useState<{ date: string; desktop: number }[]>([])
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        // Replace "anuranjan" with actual username dynamically if needed
+        const data = await getVisitChartData("anuranjan")
+
+        // Map visits → desktop (since your chart expects "desktop")
+        const formatted = data.map((item: { date: string; visits: number }) => ({
+          date: item.date,
+          desktop: item.visits,
+        }))
+
+        setChartData(formatted)
+      } catch (error) {
+        console.error("Error fetching chart data:", error)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const filteredData = chartData.filter((item) => {
+  const date = new Date(item.date)
+
+  // Use today (or you can use the latest chartData date if needed)
+  const referenceDate = new Date()
+
+  let daysToSubtract = 90
+  if (timeRange === "30d") {
+    daysToSubtract = 30
+  } else if (timeRange === "7d") {
+    daysToSubtract = 7
+  }
+
+  const startDate = new Date(referenceDate)
+  startDate.setDate(startDate.getDate() - daysToSubtract)
+
+  return date >= startDate
+})
+
 
   return (
-    <div
-      className="relative w-full aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <Image
-        src={imageSrc || "/placeholder.svg"}
-        alt={title}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-        <h3 className="text-white text-lg font-semibold hidden mb-2">{title}</h3>
-        <Button
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-black hover:bg-gray-200 transition-opacity duration-300 ${
-            isHovered ? "opacity-100" : "opacity-0"
-          } flex items-center gap-2`}
-          aria-label={`Use ${title} template`}
-        >
-          SELECT
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-// TemplateList Component
-function TemplateList() {
-  return (
-    <section className="py-16 px-4 bg-black" style={{ zoom: 0.9 }}>
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-white text-4xl md:text-5xl font-extrabold tracking-tight text-center mb-12">
-          Choose Template
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {templates.map((template) => (
-            <TemplateCard key={template.id} imageSrc={template.imageSrc} title={template.title} />
-          ))}
+    <Card className="pt-0">
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+        <div className="grid flex-1 gap-1">
+          <CardTitle>Area Chart - Interactive</CardTitle>
+          <CardDescription>Showing total visitors for the last 3 months</CardDescription>
         </div>
-      </div>
-    </section>
-  )
-}
-
-export default function Page({ params }: PageProps) {
-  const { username } = React.use(params)
-
-  return (
-    <div className="bg-[#030712] min-h-screen text-white">
-      <div className="flex">
-        {/* Left Sidebar */}
-        <aside className="w-14 p-3 flex flex-col items-center gap-8 mt-9" style={{ zoom: 0.8 }}>
-          <a
-            href={`/${username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center"
-          >
-            <Globe2Icon color="grey" />
-          </a>
-          <a href={`/dashboard/${username}`} className="inline-flex items-center justify-center">
-            <LayoutDashboard color="grey" />
-          </a>
-          <a href={`/templates`} className="inline-flex items-center justify-center">
-            <Origami color="grey" />
-          </a>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex flex-1 items-center justify-center px-4 py-16" style={{ zoom: 0.8 }}>
-          <div className="text-center max-w-5xl w-full">
-            <h1 className="text-white text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight">
-              Create your online presence. Your way.
-            </h1>
-            <p className="mt-8 text-lg md:text-xl text-white font-extrabold leading-relaxed max-w-4xl mx-auto">
-              Choose a look that reflects who you are. Tell us what you do, and our AI will craft compelling content
-              that is as sharp as your brand. The most powerful way to own your digital identity — starts here.
-            </p>
-          </div>
-        </main>
-      </div>
-
-      {/* Template List Section */}
-      <TemplateList />
-    </div>
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex" aria-label="Select a value">
+            <SelectValue placeholder="Last 3 months" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="90d" className="rounded-lg">
+              Last 3 months
+            </SelectItem>
+            <SelectItem value="30d" className="rounded-lg">
+              Last 30 days
+            </SelectItem>
+            <SelectItem value="7d" className="rounded-lg">
+              Last 7 days
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </CardHeader>
+      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+          <AreaChart data={filteredData}>
+            <defs>
+              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(213, 93%, 68%)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="hsl(213, 93%, 68%)" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                return date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    return new Date(value).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  }}
+                  indicator="dot"
+                />
+              }
+            />
+            <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" stroke="hsl(213, 93%, 68%)" stackId="a" />
+            <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" stroke="hsl(221, 83%, 53%)" stackId="a" />
+            <ChartLegend />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
   )
 }

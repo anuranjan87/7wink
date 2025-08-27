@@ -9,7 +9,7 @@ interface PageProps {
 }
 
 export default async function DashboardPage({ params }: PageProps) {
-  const { username } = params
+  const { username } = await params
 
   try {
     const visitCount = await getVisitCount(username)
@@ -87,7 +87,7 @@ export default async function DashboardPage({ params }: PageProps) {
 
 // Generate metadata for the page
 export async function generateMetadata({ params }: PageProps) {
-  const { username } = params
+  const { username } = await params
 
   return {
     title: `${username}'s Dashboard`,

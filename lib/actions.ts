@@ -21,6 +21,7 @@ export async function storeCharacter(name: string) {
     const safeName = name.toLowerCase().replace(/[^a-z0-9_]/g, "");
     const websiteTableName = `${safeName}_website`;
     const visitsTableName = `${safeName}_visits`;
+     const enquiryTableName = `${safeName}_enquiry`;
 
     // Create website table
     await sql.query(`
@@ -38,6 +39,17 @@ export async function storeCharacter(name: string) {
       CREATE TABLE IF NOT EXISTS ${visitsTableName} (
         id SERIAL PRIMARY KEY,
         entry VARCHAR(10) NOT NULL,
+        visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ip_address VARCHAR(45) NOT NULL
+      )
+    `);
+
+
+     // Create enquiry table
+    await sql.query(`
+      CREATE TABLE IF NOT EXISTS ${enquiryTableName} (
+        id SERIAL PRIMARY KEY,
+        entry VARCHAR(300) NOT NULL,
         visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

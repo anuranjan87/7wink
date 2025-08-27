@@ -88,53 +88,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   }, [])
 
  
-const handleEditorClick = () => {
-  const storedDisable = localStorage.getItem("disableNerdModeToast")
-  if (!nerdMode && storedDisable !== "true") {
-    toast.custom((t) => (
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.6, ease: "easeOut" }} // slower fade-in/out
-        className="bg-teal-500 border-2 border-dotted text-grey-600 p-4 rounded shadow-md flex justify-between items-start max-w-screen-lg"
-      >
-      <div className="flex flex-col gap-2 text-sm ">
-  {/* First row: title + close */}
-  <div className="flex justify-between items-center">
-    <strong className="text-bold">Only the <span className="text-black">yellow texts</span>  can be changed! </strong>
-    <button
-      onClick={() => toast.dismiss(t)}
-      className="text-white text-xs leading-none"
-    >
-      close
-    </button>
-  </div>
 
-  {/* Second row: description */}
-  <p>Look for the text inside quotes, those are yours to edit!</p>
-
-  {/* Third row: Don't show again */}
-  <div className="flex justify-end">
-    <button
-      onClick={() => {
-        localStorage.setItem("disableNerdModeToast", "true")
-        toast.dismiss(t)
-      }}
-      className="text-xs text-black border border-black p-2"
-    >
-      Never show again
-    </button>
-  </div>
-</div>
-
-      </motion.div>
-    ), {
-      id: "nerd-mode-tip",
-      duration: 7000,
-    })
-  }
-}
 
   useEffect(() => {
     setCodeHtml(initialContent.html)
@@ -388,10 +342,6 @@ const handleEditorClick = () => {
                 theme="custom-dark"
                 onMount={(editor, monaco) => {
                   handleEditorMount(editor, monaco)
-                  editor.onDidFocusEditorWidget(() => {
-                    editor.getDomNode()?.addEventListener("click", handleEditorClick)
-                  })
-                  setTimeout(() => editor.layout(), 100)
                 }}
                 options={{
                   fontFamily: " ",
