@@ -348,7 +348,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
                   className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-1"
                   onClick={() => setIsFullscreenOpen(true)}
                 >
-                  <Maximize2 className="w-3 h-3" />
+                  <Maximize2 className="w-3 h-3 justify-center" />
                   Maximize
                 </a>
                 <a
