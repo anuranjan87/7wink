@@ -2,6 +2,8 @@ import { getWebsiteContent } from "@/lib/website-actions"
 import { notFound } from "next/navigation"
 import { CodeEditor } from "@/components/code-editor"
 import  {Origami, Globe2Icon, LayoutDashboard, Link, CirclePlayIcon }  from "lucide-react";
+import { NavigationSidebar } from "@/components/navigation-sidebar"
+
 
 interface PageProps {
   params: {
@@ -21,29 +23,7 @@ export default async function EditPage({ params }: PageProps) {
     return (
       <div className="flex h-screen bg-[#030712] relative">
         {/* Sidebar */}
-        <aside className=" w-10 p-3 border-r border-transparent flex flex-col gap-8 my-4  ">
-          <a
-            href={`/${username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center "
-          ><Globe2Icon color="grey"/>
-           
-          </a>
-          <a
-            href={`/dashboard/${username}`}
-            className="inline-flex items-center justify-center "
-          >
-            <LayoutDashboard color="grey"/>
-          </a>
-
-           <a
-            href={`/template`}
-            className="inline-flex items-center justify-center "
-          >
-            <Origami color="grey" />
-          </a>
-        </aside>
+        <NavigationSidebar username={username} />
 
         {/* Main Content */}
         <main className="flex-1 p-1">

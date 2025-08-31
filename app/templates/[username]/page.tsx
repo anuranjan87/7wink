@@ -39,7 +39,7 @@ const templates = [
 
   {
     id: "5",
-    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MDczMjE0NTNhYWVkN2Q0ODAyZWUxY2Q4YjQxMzY4MjI.jpg-dGF7J7oUYSjuuavqPnQv6SNgcVbTfp.jpeg",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MDczMjE0NTNhYWVkN2Q0ODAyZWUxY2Q4YjQxMzY4MjI.jpg-SPlffs5FV35NRJ216nX3x3RCV64fuh.jpeg",
     title: "Stokebury",
   },
 ]
@@ -202,8 +202,8 @@ export default function Page({ params }: PageProps) {
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-70 flex items-center justify-center px-4">
         <div className="bg-gray-900 rounded-lg w-full h-full max-w-7xl max-h-[95vh] flex flex-col">
           {/* Navbar Strip */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 rounded-t-lg">
-            <h2 className="text-white text-xl font-bold">Template Preview</h2>
+          <div className="flex items-center justify-between py-4 px-9 border-b border-gray-700 bg-gray-800 rounded-t-lg">
+            <h2 className="text-white text-xl font-bold ">Template Preview</h2>
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => setShowConfirmModal(true)}
