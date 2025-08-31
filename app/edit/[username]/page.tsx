@@ -1,7 +1,7 @@
 import { getWebsiteContent } from "@/lib/website-actions"
 import { notFound } from "next/navigation"
 import { CodeEditor } from "@/components/code-editor"
-import  {Origami, Globe2Icon, LayoutDashboard, Link }  from "lucide-react";
+import  {Origami, Globe2Icon, LayoutDashboard, Link, CirclePlayIcon }  from "lucide-react";
 
 interface PageProps {
   params: {
@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default async function EditPage({ params }: PageProps) {
-  const { username } = params
+  const { username } = await params
 
   try {
     const content = await getWebsiteContent(username)
@@ -58,7 +58,7 @@ export default async function EditPage({ params }: PageProps) {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { username } = params
+  const { username } = await params
 
   return {
     title: `Edit ${username}'s Website`,

@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// ✅ Import from website-actions (dash, not underscore)
+// ✅ Import from website-actions
 import { getVisitChartData } from "@/lib/website-actions"
 
 export const description = "An interactive area chart"
@@ -34,42 +34,46 @@ const chartConfig = {
   visitors: {
     label: "Visitors",
   },
-  desktop: {
-    label: "Desktop",
-    color: "hsl(221, 83%, 53%)", // Blue color
+  visits: {
+    label: "Visits",
+    color: "hsl(200, 100%, 70%)", // Bright cyan-blue
   },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(213, 93%, 68%)", // Lighter blue color
+  unique_visits: {
+    label: "Unique Visits",
+    color: "hsl(280, 100%, 80%)", // Bright purple
   },
 } satisfies ChartConfig
 
-export default function ChartAreaInteractive() {
+export interface ChartProps {
+  username: string
+}
+
+export default function Chart({ username }: ChartProps) {   // ✅ destructure props
   const [timeRange, setTimeRange] = React.useState("90d")
   const [chartData, setChartData] = React.useState<
-    { date: string; desktop: number }[]
+    { date: string; visits: number; unique_visits?: number }[]
   >([])
 
   React.useEffect(() => {
     async function fetchData() {
       try {
-        const data = await getVisitChartData("aftlatuun")
+        
+        const data = await getVisitChartData(username)  // ✅ now just the string
 
-        // Detect viewer’s local timezone
         const viewerTZ = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-        // Convert UTC date → local date string (YYYY-MM-DD)
         const formatted = data.map(
-          (item: { date: string; visits: number }) => {
+          (item: { date: string; visits: number; unique_visits?: number }) => {
             const utcDate = new Date(item.date + "T00:00:00Z")
             const localString = utcDate.toLocaleDateString("en-CA", {
               timeZone: viewerTZ,
-            }) // → "YYYY-MM-DD"
+            })
             return {
               date: localString,
-              desktop: item.visits,
+              visits: item.visits,
+              unique_visits: item.unique_visits ?? 0,
             }
-          },
+          }
         )
 
         setChartData(formatted)
@@ -79,12 +83,12 @@ export default function ChartAreaInteractive() {
     }
 
     fetchData()
-  }, [])
+  }, [username])   // ✅ add username as dependency
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
     const referenceDate = new Date(
-      Math.max(...chartData.map((item) => new Date(item.date).getTime())),
+      Math.max(...chartData.map((i) => new Date(i.date).getTime()))
     )
     let daysToSubtract = 90
     if (timeRange === "30d") {
@@ -98,73 +102,77 @@ export default function ChartAreaInteractive() {
   })
 
   return (
-    <Card className="pt-0">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+    <Card className="pt-0 bg-black border-gray-800 text-white">
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b border-gray-800 py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>Area Chart - Interactive</CardTitle>
-          <CardDescription>
-            Showing total visitors for the last 3 months
+          <CardTitle className="text-white">Area Chart - Interactive</CardTitle>
+          <CardDescription className="text-gray-300">
+            Showing visitor data for your live site
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Select a value"
-          >
+          <SelectTrigger className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex bg-gray-900 border-gray-700 text-white hover:bg-gray-800">
             <SelectValue placeholder="Last 3 months" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
+          <SelectContent className="rounded-xl bg-gray-900 border-gray-700 text-white">
+            <SelectItem
+              value="90d"
+              className="rounded-lg hover:bg-gray-800 focus:bg-gray-800"
+            >
               Last 3 months
             </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
+            <SelectItem
+              value="30d"
+              className="rounded-lg hover:bg-gray-800 focus:bg-gray-800"
+            >
               Last 30 days
             </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
+            <SelectItem
+              value="7d"
+              className="rounded-lg hover:bg-gray-800 focus:bg-gray-800"
+            >
               Last 7 days
             </SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
+        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
           <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="hsl(221, 83%, 53%)"
+                  stopColor="hsl(200, 100%, 70%)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="hsl(221, 83%, 53%)"
+                  stopColor="hsl(200, 100%, 70%)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
               <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="hsl(213, 93%, 68%)"
+                  stopColor="hsl(280, 100%, 80%)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="hsl(213, 93%, 68%)"
+                  stopColor="hsl(280, 100%, 80%)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} stroke="hsl(0, 0%, 20%)" />
             <XAxis
               dataKey="date"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
+              tick={{ fill: "white" }}
               tickFormatter={(value) => {
                 const date = new Date(value)
                 return date.toLocaleDateString("en-US", {
@@ -184,21 +192,22 @@ export default function ChartAreaInteractive() {
                     })
                   }}
                   indicator="dot"
+                  className="bg-gray-900 border-gray-700 text-white [&_*]:text-white [&_.recharts-tooltip-item-value]:text-white"
                 />
               }
             />
             <Area
-              dataKey="mobile"
+              dataKey="unique_visits"
               type="natural"
               fill="url(#fillMobile)"
-              stroke="hsl(213, 93%, 68%)"
+              stroke="hsl(280, 100%, 80%)"
               stackId="a"
             />
             <Area
-              dataKey="desktop"
+              dataKey="visits"
               type="natural"
               fill="url(#fillDesktop)"
-              stroke="hsl(221, 83%, 53%)"
+              stroke="hsl(200, 100%, 70%)"
               stackId="a"
             />
             <ChartLegend />

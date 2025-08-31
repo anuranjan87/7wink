@@ -19,6 +19,7 @@ const openai = new OpenAI({
 
 
 export async function generateCodeWithAI(currentCode: string, prompt: string) {
+   console.log("ldldmmld")
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -47,6 +48,53 @@ The content represents website copy, so ensure the tone and style are appropriat
         {
           role: "user",
           content: `Current JavaScript data object code:\n${currentCode}\n\nUser request: ${prompt}\n\nPlease modify the JavaScript data object according to the user's request and return the complete JavaScript data object, also maintaig the word countsame as in current code. `,
+        },
+      ],
+      max_tokens: 4000,
+      temperature: 1,
+    })
+
+let generatedCode = '';
+
+for await (const chunk of completion) {
+  const content = chunk.choices[0]?.delta?.content;
+  if (content) {
+    generatedCode += content;
+  }
+}
+    if (!generatedCode) {
+      throw new Error("No code generated from OpenAI")
+    }
+
+    return {
+      success: true,
+      generatedCode: generatedCode.trim(),
+    }
+  } catch (error) {
+    console.error("Error generating code with AI:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to generate code with AI",
+    }
+  }
+}
+
+export async function generateCodeWithAIBlank(currentCode: string, prompt: string) {
+
+  
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      stream: true,
+      messages: [
+        {
+          role: "system",
+          
+          content: `create code in html 5, generate stunning website in a single page, and always use tailwind css.Do not include explanations or markdown formatting — return only the updated, do not have any action button or contact section, use this url for image urls - https://picsum.photos/720/720?random=12, where random=12 has 12 number as random generated number, if thres are three pictures in the out put please have three different random numbers in the url and 720/720 is the dimention of the image in the url,`,
+        },
+        {
+          role: "user",
+          content: `Current code:\n${currentCode}\n\nUser request: ${prompt}\n\n, if ${currentCode} is empty, generate new code, otherwise Please modify it the user's request and return the complete code `,
         },
       ],
       max_tokens: 4000,
@@ -222,21 +270,22 @@ export async function getVisitCount(username: string): Promise<number> {
   }
 }
 
-
-export async function getVisitChartData(username: string): Promise<
-  { date: string; visits: number }[]
+ export async function getVisitChartData(username: string): Promise<
+ { date: string; visits: number }[]
 > {
   try {
     const visitsTableName = `${username.toLowerCase()}_visits`
+    
 
-    // ✅ Check if the visits table exists
+
+    // Check if the visits table exists
     const tableExists = await sql.query(
       `
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_name = $1
       )
-      `,
+    `,
       [visitsTableName],
     )
 
@@ -244,28 +293,30 @@ export async function getVisitChartData(username: string): Promise<
       return []
     }
 
-    // ✅ Generate daily series, pad missing days with 0, keep timestamp-style output
-    const result = await sql.query(
-      `
-      WITH date_series AS (
-        SELECT generate_series(
-          (SELECT MIN(visited_at)::date FROM ${visitsTableName}),
-          GREATEST((SELECT MAX(visited_at)::date FROM ${visitsTableName}), NOW()::date),
-          interval '1 day'
-        )::timestamp AS date
-      )
-      SELECT 
-        TO_CHAR(ds.date, 'YYYY-MM-DD HH24:MI:SS') AS date,
-        COALESCE(COUNT(v.visited_at), 0) AS visits
-      FROM date_series ds
-      LEFT JOIN ${visitsTableName} v
-        ON ds.date::date = v.visited_at::date
-      GROUP BY ds.date
-      ORDER BY ds.date
-      `,
-    )
-    console.log(result)
-
+    // ✅ Use generate_series to pad missing days with 0
+   const result = await sql.query(
+  `
+  WITH date_series AS (
+    SELECT generate_series(
+      (SELECT MIN(visited_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date FROM ${visitsTableName}),
+      (SELECT MAX(visited_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date FROM ${visitsTableName}),
+      interval '1 day'
+    )::date AS date
+  )
+  SELECT 
+    TO_CHAR(ds.date, 'YYYY-MM-DD') AS date,
+    COALESCE(COUNT(v.visited_at), 0) AS visits
+  FROM date_series ds
+  LEFT JOIN ${visitsTableName} v
+    ON ds.date = (v.visited_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata')::date
+  GROUP BY ds.date
+  ORDER BY ds.date
+  `,
+)
+console.log(username)
+        console.log("username")
+console.log(result)
+    // Format into chartData array
     return result.map((row: any) => ({
       date: row.date,
       visits: Number(row.visits),
@@ -275,6 +326,7 @@ export async function getVisitChartData(username: string): Promise<
     return []
   }
 }
+
 
 
 
@@ -293,18 +345,26 @@ export async function getAllUsernames(): Promise<string[]> {
 }
 
 
-export async function getWebsiteTemplates() {
+export async function getWebsiteTemplates(templateID: number) {
   try {
-    const templates = await sql.query(`
-      SELECT id, name, code, code_script, code_data
-      FROM website_template
-      ORDER BY id ASC
-    `)
-
+    console.log("[v0] Fetching template with ID:", templateID)
+    const templates = await sql`
+      SELECT code, code_script, code_data 
+      FROM website_template 
+      WHERE id = ${templateID}
+    `
+    console.log("[v0] Templates fetched:", templates.length)
     return templates
   } catch (error) {
     console.error("Failed to fetch website templates:", error)
-    return []
+    // Return mock data for development
+    return [
+      {
+        code: `<div>Template ${templateID} Preview</div>`,
+        code_script: `console.log('Template ${templateID} script');`,
+        code_data: `{"templateId": ${templateID}, "name": "Sample Template"}`,
+      },
+    ]
   }
 }
 
@@ -342,7 +402,6 @@ console.log(templateCode)
     }
   }
 }
-
 
 
 export async function copyTemplateToUser(templateID: number, username: string) {
@@ -406,4 +465,26 @@ export async function sendEnquiry(username: string, formData: FormData) {
     success: true,
     message: "Enquiry submitted successfully",
   }
+}
+
+export async function getEnquiries(username: string) {
+  const enquiryTableName = `${username}_enquiry`;
+
+  const rows: any[] = await sql.query(
+    `SELECT id, entry, visited_at FROM ${enquiryTableName} ORDER BY visited_at DESC`
+  );
+console.log("helloe")
+  const enquiries = rows.map((row) => {
+    const emailMatch = row.entry.match(/Email:\s*([^,]+)/);
+    const messageMatch = row.entry.match(/Message:\s*(.*)/);
+
+    return {
+      id: row.id,
+      email: emailMatch ? emailMatch[1].trim() : null,
+      message: messageMatch ? messageMatch[1].trim() : null,
+      created_at: row.visited_at,
+    };
+  });
+
+  return enquiries;
 }

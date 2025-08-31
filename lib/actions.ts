@@ -27,9 +27,9 @@ export async function storeCharacter(name: string) {
     await sql.query(`
       CREATE TABLE IF NOT EXISTS ${websiteTableName} (
         id SERIAL PRIMARY KEY,
-        code TEXT NOT NULL,
-        code_script TEXT NOT NULL,
-        code_data TEXT NOT NULL,
+        code TEXT,
+        code_script TEXT,
+        code_data TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
