@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import Split from "react-split"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, X, Monitor, Smartphone } from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, X, Monitor, Smartphone, SquarePlus } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
@@ -352,10 +352,10 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
                   Maximize
                 </a>
                 <a
-                  className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center mr-3 text-serif font-normal hover:cursor-pointer tracking-wider text-xs"
+                  className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-1"
                   onClick={() => setIsOpen(true)}
                 >
-                  Insert
+                  <SquarePlus className="w-3 h-3 " />Button
                 </a>
               </div>
             </div>
