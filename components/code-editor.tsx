@@ -1,24 +1,17 @@
 "use client"
-import React from "react"
+import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
-import Split from "react-split"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, X, Monitor, Smartphone, SquarePlus } from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { insertList } from "@/lib/insertlist"
+import dynamic from "next/dynamic"
+import { FullscreenPreviewModal, InsertButtonModal, CodeEditorMaximizeModal } from "@/components/modal"
 import { motion, AnimatePresence } from "framer-motion"
-import { insertList, type InsertItem } from "@/lib/insertlist"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-
-const screenVariants = {
-  enter: { opacity: 0, x: 50 },
-  center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -50 },
-}
+import { LoadingCircle, SendIcon } from '@/components/icons'
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -71,6 +64,13 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [codeHtml, setCodeHtml] = useState(initialContent.html)
   const [codeScript, setCodescript] = useState(initialContent.script)
   const [codeData, setCodedata] = useState(initialContent.data)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [savedContent, setSavedContent] = useState({
+    html: initialContent.html,
+    script: initialContent.script,
+    data: initialContent.data,
+  })
+  const [isManualEdit, setIsManualEdit] = useState(false)
   const [nerdMode, setnerdMode] = useState(false)
   const [activeTab, setActiveTab] = useState("data.js")
   const [isPublishing, setIsPublishing] = useState(false)
@@ -86,18 +86,67 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [isRestoringScroll, setIsRestoringScroll] = useState(false)
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 })
   const [debouncedContent, setDebouncedContent] = useState(initialContent.html)
+  const [isCodeEditorMaximized, setIsCodeEditorMaximized] = useState(false)
 
   useEffect(() => {
     setCodeHtml(initialContent.html)
     setCodescript(initialContent.script)
     setCodedata(initialContent.data)
+    setSavedContent({
+      html: initialContent.html,
+      script: initialContent.script,
+      data: initialContent.data,
+    })
+
+    // Auto-update preview for initial load
+    const safeHtml = initialContent.html || ""
+    const safeScript = initialContent.script || ""
+    const safeData = initialContent.data || ""
+
+    let combinedHtml = safeHtml
+    combinedHtml = combinedHtml.replace('<script src="data.js"></script>', `<script>\n${safeData}\n</script>`)
+    combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script>\n${safeScript}\n</script>`)
+    setDebouncedContent(combinedHtml)
+    setIsManualEdit(false)
   }, [initialContent])
+
+  useEffect(() => {
+    const hasChanges =
+      codeHtml !== savedContent.html || codeScript !== savedContent.script || codeData !== savedContent.data
+
+    setHasUnsavedChanges(hasChanges && isManualEdit)
+  }, [codeHtml, codeScript, codeData, savedContent, isManualEdit])
+
+  const updatePreviewImmediately = (html: string, script: string, data: string) => {
+    captureScrollPosition()
+
+    let combinedHtml = html || ""
+    const safeScript = script || ""
+    const safeData = data || ""
+
+    combinedHtml = combinedHtml.replace('<script src="data.js"></script>', `<script>\n${safeData}\n</script>`)
+    combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script>\n${safeScript}\n</script>`)
+    setDebouncedContent(combinedHtml)
+
+    setSavedContent({
+      html: html || "",
+      script: safeScript,
+      data: safeData,
+    })
+  }
+
+  const handleSave = () => {
+    updatePreviewImmediately(codeHtml, codeScript, codeData)
+    setHasUnsavedChanges(false)
+    setIsManualEdit(false)
+  }
 
   const captureScrollPosition = () => {
     if (iframeRef.current?.contentWindow && !isRestoringScroll) {
       try {
         const { scrollX, scrollY } = iframeRef.current.contentWindow
         setScrollPosition({ x: scrollX, y: scrollY })
+        console.log("[v0] Captured scroll position:", { x: scrollX, y: scrollY })
       } catch (error) {
         console.log("[v0] Could not capture scroll position:", error)
       }
@@ -107,33 +156,119 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const restoreScrollPosition = () => {
     if (iframeRef.current?.contentWindow) {
       setIsRestoringScroll(true)
-      setTimeout(() => {
+
+      const attemptRestore = (attempt = 1) => {
         try {
           iframeRef.current?.contentWindow?.scrollTo(scrollPosition.x, scrollPosition.y)
+          console.log("[v0] Restored scroll position:", scrollPosition, `(attempt ${attempt})`)
         } catch (error) {
           console.log("[v0] Could not restore scroll position:", error)
         }
-        setIsRestoringScroll(false)
-      }, 50)
+
+        if (attempt < 3) {
+          setTimeout(() => attemptRestore(attempt + 1), attempt * 100)
+        } else {
+          setIsRestoringScroll(false)
+        }
+      }
+
+      setTimeout(attemptRestore, 50)
     }
   }
 
   const handleIframeLoad = () => {
+    if (iframeRef.current?.contentWindow) {
+      try {
+        const doc = iframeRef.current.contentWindow.document
+        const script = doc.createElement("script")
+        script.textContent = `
+          let preservedScrollPosition = { x: ${scrollPosition.x}, y: ${scrollPosition.y} };
+          
+          const preserveScroll = () => {
+            preservedScrollPosition = { x: window.scrollX, y: window.scrollY };
+            window.parent.postMessage({ type: 'scrollUpdate', position: preservedScrollPosition }, '*');
+          };
+          
+          const restoreScroll = () => {
+            requestAnimationFrame(() => {
+              window.scrollTo(preservedScrollPosition.x, preservedScrollPosition.y);
+            });
+          };
+          
+          const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+          if (originalInnerHTML) {
+            Object.defineProperty(Element.prototype, 'innerHTML', {
+              set: function(value) {
+                preserveScroll();
+                originalInnerHTML.set.call(this, value);
+                setTimeout(restoreScroll, 10);
+              },
+              get: originalInnerHTML.get
+            });
+          }
+          
+          const originalAppendChild = Element.prototype.appendChild;
+          Element.prototype.appendChild = function(child) {
+            preserveScroll();
+            const result = originalAppendChild.call(this, child);
+            setTimeout(restoreScroll, 10);
+            return result;
+          };
+          
+          const originalRemoveChild = Element.prototype.removeChild;
+          Element.prototype.removeChild = function(child) {
+            preserveScroll();
+            const result = originalRemoveChild.call(this, child);
+            setTimeout(restoreScroll, 10);
+            return result;
+          };
+          
+          const originalInsertBefore = Element.prototype.insertBefore;
+          Element.prototype.insertBefore = function(newNode, referenceNode) {
+            preserveScroll();
+            const result = originalInsertBefore.call(this, newNode, referenceNode);
+            setTimeout(restoreScroll, 10);
+            return result;
+          };
+          
+          const observer = new MutationObserver((mutations) => {
+            let shouldRestore = false;
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList' && (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+                shouldRestore = true;
+              }
+            });
+            if (shouldRestore) {
+              setTimeout(restoreScroll, 20);
+            }
+          });
+          
+          window.addEventListener('load', () => {
+            observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+              attributes: false
+            });
+            
+            setTimeout(() => {
+              window.scrollTo(preservedScrollPosition.x, preservedScrollPosition.y);
+            }, 100);
+          });
+          
+          let scrollTimeout;
+          window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(preserveScroll, 100);
+          });
+        `
+        doc.head.appendChild(script)
+      } catch (error) {
+        console.log("[v0] Could not inject scroll preservation script:", error)
+      }
+    }
+
     restoreScrollPosition()
   }
-
-  useEffect(() => {
-    captureScrollPosition()
-
-    const timer = setTimeout(() => {
-      let combinedHtml = codeHtml
-      combinedHtml = combinedHtml.replace('<script src="data.js"></script>', `<script>\n${codeData}\n</script>`)
-      combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script>\n${codeScript}\n</script>`)
-      setDebouncedContent(combinedHtml)
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [codeHtml, codeScript, codeData])
 
   useEffect(() => {
     const iframe = iframeRef.current
@@ -145,9 +280,19 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
       }
     }
 
+    const handleMessage = (event: any) => {
+      if (event.data?.type === "scrollUpdate") {
+        setScrollPosition(event.data.position)
+      }
+    }
+
     try {
       iframe.contentWindow.addEventListener("scroll", handleScroll)
-      return () => iframe.contentWindow?.removeEventListener("scroll", handleScroll)
+      window.addEventListener("message", handleMessage)
+      return () => {
+        iframe.contentWindow?.removeEventListener("scroll", handleScroll)
+        window.removeEventListener("message", handleMessage)
+      }
     } catch (error) {
       console.log("[v0] Could not add scroll listener:", error)
     }
@@ -210,11 +355,14 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
 
       if (result.success && result.generatedCode) {
         if (isBlank) {
-          setCodeHtml(result.generatedCode) // update HTML if blank
+          setCodeHtml(result.generatedCode)
+          updatePreviewImmediately(result.generatedCode, codeScript, codeData)
         } else {
-          setCodedata(result.generatedCode) // update data if not blank
+          setCodedata(result.generatedCode)
+          updatePreviewImmediately(codeHtml, codeScript, result.generatedCode)
         }
         setAiPrompt("")
+        setIsManualEdit(false) // AI changes don't require manual save
         setMessage({ type: "success", text: "Code updated successfully with AI assistance!" })
       } else {
         setMessage({ type: "error", text: result.error || "Failed to generate code with AI" })
@@ -240,50 +388,55 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     }
   }, [message])
 
+  const handleManualCodeChange = (setter: (value: string) => void) => (value: string) => {
+    setter(value)
+    setIsManualEdit(true)
+  }
+
   let currentCode, currentSetCode, currentLanguage
   if (nerdMode) {
     switch (activeTab) {
       case "data.js":
         currentCode = codeData
-        currentSetCode = setCodedata
+        currentSetCode = handleManualCodeChange(setCodedata)
         currentLanguage = "javascript"
         break
       case "index.html":
         currentCode = codeHtml
-        currentSetCode = setCodeHtml
+        currentSetCode = handleManualCodeChange(setCodeHtml)
         currentLanguage = "html"
         break
       case "script.js":
         currentCode = codeScript
-        currentSetCode = setCodescript
+        currentSetCode = handleManualCodeChange(setCodescript)
         currentLanguage = "javascript"
         break
       default:
         currentCode = codeData
-        currentSetCode = setCodedata
+        currentSetCode = handleManualCodeChange(setCodedata)
         currentLanguage = "javascript"
     }
   } else {
     if (!initialContent?.data) {
       currentCode = codeHtml
-      currentSetCode = setCodeHtml
+      currentSetCode = handleManualCodeChange(setCodeHtml)
       currentLanguage = "html"
     } else {
       currentCode = codeData
-      currentSetCode = setCodedata
+      currentSetCode = handleManualCodeChange(setCodedata)
       currentLanguage = "javascript"
     }
   }
 
   return (
-    <div className="flex flex-col ">
-      <div className="bg-[#181818] px-4 mt-1 rounded-xl" style={{ zoom: 0.9 }}>
-        <div className="flex items-center gap-1">
-          <div className="flex-1 flex max-w-2xl mx-auto mt-1 rounded border-2 border-dotted border-gray-700 shadow-2xl px-2 py-1 min-w-sm focus-within:border-gray-300">
+    <div className="flex flex-col">
+      <div className="bg-[#181818] px-4 mt-2 rounded-xl" style={{ zoom: 0.9 }}>
+        <div className="flex items-center shadow-2xl gap-1">
+          <div className="flex-1 flex max-w-2xl mx-auto mt-1 rounded-xl border-2 border-dotted border-gray-700 shadow-2xl px-2 py-1 min-w-sm focus-within:border-gray-300">
             <input
               type="text"
               ref={inputRef}
-              placeholder="Pitch yourself like you are on Shark Tank..."
+              placeholder="Tell us your site idea — name, vibe, what it does..."
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               onKeyDown={handleKeyPress}
@@ -299,14 +452,14 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
               <span className="flex items-center transition-all opacity-1">
                 {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span className="mx-auto text-sm font-semibold truncate whitespace-nowrap text-white">
+                    <LoadingCircle />
+                    <span className="mx-auto text-sm font-semibold truncate whitespace-nowrap text-white px-2">
                       Generating...
                     </span>
                   </>
-                ) : (
-                  <Send className="mr-2 h-4 w-4 " />
-                )}
+                ) :  (
+          <SendIcon className={`h-4 w-4 ${aiPrompt.length === 0 ? "text-muted-foreground" : "text-primary-foreground"}`} />
+        )}
               </span>
             </button>
           </div>
@@ -325,308 +478,218 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
             )}
           </a>
         </div>
-        {message && (
-          <Alert variant={message.type === "error" ? "destructive" : "default"} className="mt-2">
-            {message.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            <AlertDescription>{message.text}</AlertDescription>
-          </Alert>
+      <AnimatePresence mode="wait">
+  {message && (
+    <motion.div
+      key={message.text}
+      layout   // 🔑 preserves smooth layout shifts
+      initial={{ opacity: 0, y: -20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.9 }}
+      transition={{
+        type: "spring",
+        stiffness: 120,
+        damping: 16,
+        duration: 0.35,
+      }}
+      className="mt-2"
+    >
+      <Alert
+        variant={message.type === "error" ? "destructive" : "default"}
+        className="bg-black text-white border border-gray-800 rounded-xl shadow-lg flex items-center gap-2 p-3"
+      >
+        {message.type === "success" ? (
+          <CheckCircle className="h-5 w-5 text-green-400" />
+        ) : (
+          <AlertCircle className="h-5 w-5 text-red-400" />
         )}
+        <AlertDescription className="text-gray-200 tracking-wide">
+          {message.text}
+        </AlertDescription>
+      </Alert>
+    </motion.div>
+  )}
+</AnimatePresence>
+
       </div>
-      <div className="mt-4">
-        <Split
-          sizes={[50, 50]}
-          minSize={100}
-          gutterSize={10}
-          direction="horizontal"
-          className="flex w-full h-full hover:cursor-crosshair"
-        >
-          <div className=" h-[calc(100vh-120px)] bg-[#030712] border-t border-gray-300 rounded-t-lg">
-            <div className="px-4 py-1 flex justify-between ">
-              <h2 className="font-bold text-sm tracking-widest text-yellow-400">Preview</h2>
+// Panel starts here
+      <div className="-mt-2  flex h-[calc(100vh-120px)] gap-3">
+        {/* Preview Panel */}
+        <div className="flex-1 bg-[#030712] border-t border-gray-800 rounded-t-lg">
+          <div className="px-4 py-1 flex justify-between">
+            <h2 className="font-bold text-sm tracking-widest text-yellow-400">Preview</h2>
+            <div className="flex items-center gap-1">
+               <a
+                className="text-gray-400 px-2 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-2"
+                onClick={() => setIsOpen(true)}
+              >
+                <Plus className="w-3 h-3 " />
+                Button
+              </a>
+
+              <a
+                className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-2"
+                onClick={() => setIsFullscreenOpen(true)}
+              >
+                <Maximize2 className="w-3 h-3 justify-center" />
+                Full screen
+              </a>
+             
+            </div>
+          </div>
+          <div className="h-full overflow-auto custom-scrollbar">
+            <iframe
+              ref={iframeRef}
+              srcDoc={debouncedContent}
+              onLoad={handleIframeLoad}
+              className="w-full h-full  rounded-lg"
+              title="Live Preview"
+              sandbox="allow-scripts allow-same-origin"
+              style={{ zoom: .7 }}
+            />
+          </div>
+        </div>
+
+        {/* Code Editor Panel */}
+        <div className="flex-1 h-full relative">
+          <div className="border-t border-gray-800 rounded-t-lg px-4 py-1 bg-[#030712]">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <a
-                  className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-1"
-                  onClick={() => setIsFullscreenOpen(true)}
-                >
-                  <Maximize2 className="w-3 h-3 justify-center" />
-                  Maximize
-                </a>
-                <a
-                  className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-1"
-                  onClick={() => setIsOpen(true)}
-                >
-                  <SquarePlus className="w-3 h-3 " />Button
-                </a>
-              </div>
-            </div>
-            <div className="h-full overflow-auto custom-scrollbar">
-              <iframe
-                ref={iframeRef}
-                srcDoc={debouncedContent}
-                onLoad={handleIframeLoad}
-                className="w-full h-full border border-{#181818} rounded-lg"
-                title="Live Preview"
-                sandbox="allow-scripts allow-same-origin"
-                style={{ zoom: 0.8 }}
-              />
-            </div>
-          </div>
-          <div className=" h-full">
-            <div className="border-t border-gray-300 rounded-t-lg px-4 py-1 bg-[#030712]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-red-600 rounded-full"></span>
-                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                    <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-red-600 rounded-full"></span>
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                </div>
+                {nerdMode && (
+                  <div className="flex items-center gap-6 ml-4">
+                    {["data.js", "index.html", "script.js"].map((tabName) => (
+                      <button
+                        key={tabName}
+                        style={{ zoom: 0.8 }}
+                        className={cn(
+                          "px-7 py-1 text-xs font-serif tracking-widest rounded-md transition-colors duration-200",
+                          activeTab === tabName ? "bg-[#242424] text-yellow-400" : "text-gray-400 hover:bg-[#242424]",
+                        )}
+                        onClick={() => setActiveTab(tabName)}
+                      >
+                        {tabName}
+                      </button>
+                    ))}
                   </div>
-                  {nerdMode && (
-                    <div className="flex items-center gap-4 ml-4">
-                      {["data.js", "index.html", "script.js"].map((tabName) => (
-                        <button
-                          key={tabName}
-                          style={{ zoom: 0.8 }}
-                          className={cn(
-                            "px-7 py-1 text-xs font-serif tracking-widest rounded-md transition-colors duration-200",
-                            activeTab === tabName ? "bg-[#242424] text-yellow-400" : "text-gray-400 hover:bg-[#242424]",
-                          )}
-                          onClick={() => setActiveTab(tabName)}
-                        >
-                          {tabName}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="items-center flex my-0.5 -mr-1">
-                  <Switch
-                    checked={nerdMode}
-                    onCheckedChange={(checked) => {
-                      setnerdMode(checked)
-                      if (!checked) {
-                        setActiveTab("data.js")
-                      }
-                    }}
-                    id="nerdmode"
-                    style={{ zoom: 0.5 }}
-                    className="mr-4 data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-yellow-600"
-                  />
-                  <Label htmlFor="nerdmode" className="text-xs tracking-wide font-normal text-serif text-gray-500">
-                    Nerd Mode
-                  </Label>
-                </div>
+                )}
               </div>
-            </div>
-            <div>
-              <MonacoEditor
-                height="calc(100vh - 120px)"
-                language={currentLanguage}
-                value={currentCode}
-                onChange={(value) => currentSetCode(value || "")}
-                theme="custom-dark"
-                onMount={(editor, monaco) => {
-                  handleEditorMount(editor, monaco)
-                }}
-                options={{
-                  fontFamily: " ",
-                  fontLigatures: true,
-                  fontWeight: "200",
-                  lineHeight: 17,
-                  letterSpacing: 0.8,
-                  tabSize: 2,
-                  minimap: { enabled: false },
-                  fontSize: 12,
-                  scrollBeyondLastLine: false,
-                  lineNumbers: "on",
-                  padding: { top: 10, bottom: 10 },
-                }}
-              />
-            </div>
-          </div>
-        </Split>
-      </div>
-
-      <AnimatePresence>
-        {isFullscreenOpen && (
-          <motion.div
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0.0, 0.2, 1] }}
-          >
-            <motion.div
-              className="w-full h-full flex flex-col"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.4, 0.0, 0.2, 1] }}
-            >
-              <div className="flex items-center justify-between p-6 bg-white/5 backdrop-blur-sm border-b border-white/10">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-white text-lg font-medium">Preview</h2>
-                  <div className="flex items-center bg-white/10 rounded-lg p-1">
-                    <button
-                      onClick={() => setPreviewDevice("desktop")}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
-                        previewDevice === "desktop"
-                          ? "bg-white text-black shadow-sm"
-                          : "text-white/70 hover:text-white hover:bg-white/10",
-                      )}
-                    >
-                      <Monitor className="w-4 h-4" />
-                      Desktop
-                    </button>
-                    <button
-                      onClick={() => setPreviewDevice("mobile")}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
-                        previewDevice === "mobile"
-                          ? "bg-white text-black shadow-sm"
-                          : "text-white/70 hover:text-white hover:bg-white/10",
-                      )}
-                    >
-                      <Smartphone className="w-4 h-4" />
-                      Mobile
-                    </button>
-                  </div>
-                </div>
+              <div className="items-center flex my-0.5 -mr-1">
                 <button
-                  onClick={() => setIsFullscreenOpen(false)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white/70 hover:text-white"
+                  onClick={() => setIsCodeEditorMaximized(true)}
+                  className="text-gray-400 px-2  mr-4 rounded-sm hover:bg-[#242424] hover:text-white transition-colors duration-200"
+                  title="Maximize Code Editor"
                 >
-                  <X className="w-5 h-5" />
+                  <Maximize2 className="w-3 h-3" />
                 </button>
+                <Switch
+                  checked={nerdMode}
+                  onCheckedChange={(checked) => {
+                    setnerdMode(checked)
+                    if (!checked) {
+                      setActiveTab("data.js")
+                    }
+                  }}
+                  id="nerdmode"
+                  style={{ zoom: 0.5 }}
+                  className="mr-4 data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-yellow-600"
+                />
+                <Label htmlFor="nerdmode" className="text-xs tracking-wide font-normal text-serif text-gray-500">
+                  Nerd Mode
+                </Label>
               </div>
-              <div className="flex-1 flex items-center justify-center p-6">
-                <motion.div
-                  className={cn(
-                    "bg-white rounded-xl shadow-2xl overflow-hidden",
-                    previewDevice === "desktop" ? "w-full h-full max-w-7xl" : "w-[375px] h-[812px]",
-                  )}
-                  layout
-                  transition={{ duration: 0.3, ease: [0.4, 0.0, 0.2, 1] }}
-                >
-                  <iframe
-                    srcDoc={debouncedContent}
-                    className="w-full h-full border-none"
-                    title="Fullscreen Preview"
-                    sandbox="allow-scripts allow-same-origin"
-                  />
-                </motion.div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setIsOpen(false)
-                setSelected(null)
+          <div>
+            <MonacoEditor
+              height="calc(100vh - 120px)"
+              language={currentLanguage}
+              value={currentCode}
+              onChange={(value) => currentSetCode(value || "")} // Fixed parameter usage
+              theme="custom-dark"
+              onMount={(editor, monaco) => {
+                handleEditorMount(editor, monaco)
+              }}
+              options={{
+                fontFamily: " ",
+                fontLigatures: true,
+                fontWeight: "200",
+                lineHeight: 17,
+                letterSpacing: 0.8,
+                tabSize: 2,
+                minimap: { enabled: false },
+                fontSize: 12,
+                scrollBeyondLastLine: false,
+                lineNumbers: "on",
+                padding: { top: 10, bottom: 10 },
               }}
             />
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0, scale: 0.9, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 50 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative overflow-hidden">
-                <h2 className="text-xl font-semibold mb-1">Insert Action Button</h2>
-                <p className="text-xs text-gray-500 mb-4">Lead your visitors into cash-flowing conversations</p>
-                <div className="relative min-h-[160px] overflow-y-auto">
-                  <AnimatePresence mode="wait">
-                    {selected === null ? (
-                      <motion.div
-                        key="list"
-                        variants={screenVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="absolute w-full"
-                      >
-                        <div className="flex items-center justify-center w-full">
-                          <ScrollArea className="h-96 w-64 rounded-xl border border-gray-200 bg-white shadow-lg">
-                            <div className="p-6">
-                              <div className="space-y-1">
-                                {insertList.map((item: InsertItem, index: number) => (
-                                  <React.Fragment key={item.title}>
-                                    <div
-                                      onClick={() => setSelected(index)}
-                                      className="group text-sm text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
-                                    >
-                                      <span className="font-mono">{item.title}</span>
-                                    </div>
-                                    {index < insertList.length - 1 && <Separator className="my-1 bg-gray-200" />}
-                                  </React.Fragment>
-                                ))}
-                              </div>
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="content"
-                        variants={screenVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="absolute w-full"
-                      >
-                        <div className="py-5 px-3 font-mono bg-gray-50 rounded-lg border border-gray-200 mt-12">
-                          <p className="text-sm ">
-                            Click Submit to confirm. Messages from visitors appear instantly on your dashboard.
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                <div className="mt-6 flex justify-end gap-2">
-                  {selected !== null && (
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="px-4 py-1 text-xs bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Back
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setIsOpen(false)
-                      setSelected(null)
-                    }}
-                    className="px-4 py-1 text-xs bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Close
-                  </button>
-                  {selected !== null && (
-                    <button
-                      onClick={handleInsertSubmit}
-                      className="px-4 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Submit
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </div>
+
+         {hasUnsavedChanges && (
+  <button
+    onClick={handleSave}
+    className="absolute bottom-6 right-6
+               min-w-[140px] px-6 py-3
+               bg-white/10 
+               backdrop-blur-xl 
+               border border-white/30 
+               hover:bg-white/20 
+               text-white 
+               text-sm font-[system-ui] font-semibold tracking-wide
+               rounded-2xl
+               shadow-lg
+               transition-all duration-300 
+               z-10 
+               flex items-center justify-center
+               hover:scale-105 hover:shadow-2xl
+                overflow-hidden"
+    title="Save changes to update preview"
+  >
+    <span className="relative z-10">Save</span>
+    {/* Glow effect */}
+    <span className="absolute inset-0 rounded-2xl bg-gradient-to-r from-green-400/30 to-emerald-500/30 opacity-0 hover:opacity-100 transition-opacity duration-500" />
+  </button>
+)}
+
+        </div>
+      </div>
+
+      <FullscreenPreviewModal
+        isOpen={isFullscreenOpen}
+        onClose={() => setIsFullscreenOpen(false)}
+        debouncedContent={debouncedContent}
+        previewDevice={previewDevice}
+        setPreviewDevice={setPreviewDevice}
+      />
+
+      <InsertButtonModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        selected={selected}
+        setSelected={setSelected}
+        onSubmit={handleInsertSubmit}
+      />
+
+      <CodeEditorMaximizeModal
+        isOpen={isCodeEditorMaximized}
+        onClose={() => setIsCodeEditorMaximized(false)}
+        nerdMode={nerdMode}
+        setNerdMode={setnerdMode}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        currentCode={currentCode}
+        currentSetCode={currentSetCode}
+        currentLanguage={currentLanguage}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onSave={handleSave}
+        handleEditorMount={handleEditorMount}
+      />
     </div>
   )
 }

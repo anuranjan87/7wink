@@ -49,7 +49,7 @@ export function CharacterForm() {
 
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-          router.push(`/edit/${name.toLowerCase()}`)
+          router.push(`/templates/${name.toLowerCase()}`)
         }, 1500)
 
         setName("")

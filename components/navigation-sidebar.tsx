@@ -14,7 +14,7 @@ export function NavigationSidebar({ username }: NavigationSidebarProps) {
         className="inline-flex flex-col items-center justify-center text-[9px] text-zinc-400 text-center leading-tight hover:text-white transition-colors"
       >
         <Globe2Icon size={18} strokeWidth={1.5} className="text-zinc-300 hover:text-white transition-colors" />
-        <span className="mt-1 break-words">website</span>
+        <span className="mt-1 break-words">Site</span>
       </a>
 
       <a

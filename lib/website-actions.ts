@@ -14,7 +14,7 @@ export interface WebsiteContent {
 
 
 const openai = new OpenAI({
-  apiKey: "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",
+  apiKey: "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",
 })
 
 
@@ -43,7 +43,7 @@ Do not add or remove properties unless explicitly asked.
 
 Do not include explanations or markdown formatting — return only the updated JavaScript code.
 
-The content represents website copy, so ensure the tone and style are appropriate for web presentation.`,
+The content represents website copy, so ensure the tone and style are appropriate for web presentation. You never chage image urls based on user prompt, keep them unchanged-strictly`,
         },
         {
           role: "user",

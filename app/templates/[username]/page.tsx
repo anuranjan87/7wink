@@ -6,6 +6,8 @@ import { useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { copyTemplateToUser, getWebsiteTemplates } from "@/lib/website-actions"
+import { motion, AnimatePresence } from "framer-motion"
+
 
 interface PageProps {
   params: Promise<{
@@ -148,7 +150,7 @@ export default function Page({ params }: PageProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
           <h3 className="text-white text-lg font-semibold hidden mb-2">{title}</h3>
-          <Button
+          <Button style={{zoom: 1.2}}
             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-black hover:bg-gray-200 transition-all duration-300 ${
               isHovered || isThisTemplateLoading ? "opacity-100" : "opacity-0"
             } flex items-center gap-2 ${isThisTemplateLoading ? "bg-gray-200" : ""}`}
@@ -253,27 +255,55 @@ export default function Page({ params }: PageProps) {
   function ConfirmModal() {
     if (!showConfirmModal) return null
 
-    return (
-      <div className="fixed z-100 inset-0 bg-black/90 backdrop-blur-sm z-60 flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full border border-gray-700">
-          <h3 className="text-white text-xl font-bold mb-4">Confirm Action</h3>
-          <p className="text-gray-300 mb-6">
-           The template will copy to your workspace for editing. Any existing live site will be replaced .
-          </p>
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmModal(false)}
-              className="border-gray-600 text-black hover:bg-gray-200"
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmEdit} className="bg-white text-black hover:bg-gray-200">
-              OK
-            </Button>
-          </div>
+    return (<AnimatePresence>
+ 
+    <motion.div
+      className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+    >
+      <motion.div
+        className="bg-white rounded-3xl p-8 max-w-md w-full border border-gray-200 shadow-2xl"
+        initial={{ opacity: 0, scale: 0.7, y: 40 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.7, y: 40 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 18,
+          mass: 0.8
+        }}
+      >
+        <h3 className="text-gray-900 text-2xl font-bold mb-4 text-center">
+          go ahead?
+        </h3>
+        <p className="text-gray-600 mb-8 text-center leading-relaxed">
+         When copied, template shows up for editing, but your old site is kinda gone.
+        </p>
+
+        <div className="flex gap-3 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => setShowConfirmModal(false)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-100 px-6 py-2 rounded-lg"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmEdit}
+            className="bg-black text-white hover:bg-gray-800 px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            Let’s Go 
+          </Button>
         </div>
-      </div>
+      </motion.div>
+    </motion.div>
+  
+</AnimatePresence>
+
+
     )
   }
 
