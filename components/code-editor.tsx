@@ -432,7 +432,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     <div className="flex flex-col">
       <div className="bg-[#181818] px-4 mt-2 rounded-xl" style={{ zoom: 0.9 }}>
         <div className="flex items-center shadow-2xl gap-1">
-          <div className="flex-1 flex max-w-2xl mx-auto mt-1 rounded-xl border-2 border-dotted border-gray-700 shadow-2xl px-2 py-1 min-w-sm focus-within:border-gray-300">
+          <div className="flex-1 font-sans  text-white flex max-w-2xl mx-auto mt-1 rounded-xl border-2 border-dotted border-gray-700 shadow-2xl px-2 py-1 min-w-sm focus-within:border-gray-300">
             <input
               type="text"
               ref={inputRef}
@@ -441,7 +441,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
               onChange={(e) => setAiPrompt(e.target.value)}
               onKeyDown={handleKeyPress}
               disabled={isGenerating}
-              className="flex-1 w-full px-6 py-2 bg-transparent border-none rounded-none rounded-l focus:outline-none focus:ring-0 caret-white text-teal-400 placeholder:opacity-100 focus:placeholder-opacity-0"
+              className="flex-1 w-full px-6 py-2 placeholder:text-stone-400 placeholder:font-normal placeholder:tracking-wider bg-transparent border-none rounded-none rounded-l focus:outline-none focus:ring-0 caret-white text-teal-400 placeholder:opacity-100 focus:placeholder-opacity-0"
             />
             <button
               onClick={handleAIGenerate}
@@ -519,21 +519,25 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
           <div className="px-4 py-1 flex justify-between">
             <h2 className="font-bold text-sm tracking-widest text-yellow-400">Preview</h2>
             <div className="flex items-center gap-1">
-               <a
-                className="text-gray-400 px-2 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-2"
-                onClick={() => setIsOpen(true)}
-              >
-                <Plus className="w-3 h-3 " />
-                Button
-              </a>
+             
 
-              <a
-                className="text-gray-400 px-3 rounded-sm border-gray-400 justify-center text-serif font-normal hover:cursor-pointer tracking-wider text-xs flex items-center gap-2"
-                onClick={() => setIsFullscreenOpen(true)}
-              >
-                <Maximize2 className="w-3 h-3 justify-center" />
-                Full screen
-              </a>
+              
+      <button onClick={() => setIsOpen(true)} style={{zoom: .9}} className="inline-flex items-center justify-center  align-middle select-none font-sans font-medium text-center transition-all ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm  px-2 shadow-sm bg-transparent relative text-stone-400 hover:bg-stone-700  duration-150  rounded-md  hover:shadow-none antialiased mr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 mr-2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Insert More
+      </button>
+    
+
+               <button onClick={() => setIsFullscreenOpen(true)} style={{zoom: .9}} className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm rounded-md  px-2 bg-transparent border-transparent text-stone-400 hover:bg-stone-700 hover:border-stone-100/5 shadow-none hover:shadow-none">
+        <span>Maximize</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 ml-2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+        </svg>
+      </button>
+
+            
              
             </div>
           </div>
@@ -578,14 +582,12 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
                   </div>
                 )}
               </div>
-              <div className="items-center flex my-0.5 -mr-1">
-                <button
-                  onClick={() => setIsCodeEditorMaximized(true)}
-                  className="text-gray-400 px-2  mr-4 rounded-sm hover:bg-[#242424] hover:text-white transition-colors duration-200"
-                  title="Maximize Code Editor"
-                >
-                  <Maximize2 className="w-3 h-3" />
-                </button>
+              <div className="items-center flex  -mr-1">
+
+
+               <Label htmlFor="nerdmode" className="text-xs mr-2 font-sans font-medium text-serif text-stone-400">
+                  Nerd Mode
+                </Label>
                 <Switch
                   checked={nerdMode}
                   onCheckedChange={(checked) => {
@@ -598,9 +600,15 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
                   style={{ zoom: 0.5 }}
                   className="mr-4 data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-yellow-600"
                 />
-                <Label htmlFor="nerdmode" className="text-xs tracking-wide font-normal text-serif text-gray-500">
-                  Nerd Mode
-                </Label>
+                
+
+
+                 <button onClick={() => setIsCodeEditorMaximized(true)} style={{zoom: .9}} className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm rounded-md  px-2 bg-transparent border-transparent text-stone-400 hover:bg-stone-700 hover:border-stone-100/5 shadow-none hover:shadow-none">
+        <span>Maximize</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 ml-2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+        </svg>
+      </button>
               </div>
             </div>
           </div>
@@ -660,13 +668,15 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         </div>
       </div>
 
-      <FullscreenPreviewModal
-        isOpen={isFullscreenOpen}
-        onClose={() => setIsFullscreenOpen(false)}
-        debouncedContent={debouncedContent}
-        previewDevice={previewDevice}
-        setPreviewDevice={setPreviewDevice}
-      />
+     <FullscreenPreviewModal
+  isOpen={isFullscreenOpen}
+  onClose={() => setIsFullscreenOpen(false)}
+  debouncedContent={debouncedContent}
+  previewDevice={previewDevice}
+  setPreviewDevice={setPreviewDevice}
+  openEditor={() => setIsCodeEditorMaximized(true)} // 👈 add this
+/>
+
 
       <InsertButtonModal
         isOpen={isOpen}
@@ -676,20 +686,22 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         onSubmit={handleInsertSubmit}
       />
 
-      <CodeEditorMaximizeModal
-        isOpen={isCodeEditorMaximized}
-        onClose={() => setIsCodeEditorMaximized(false)}
-        nerdMode={nerdMode}
-        setNerdMode={setnerdMode}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        currentCode={currentCode}
-        currentSetCode={currentSetCode}
-        currentLanguage={currentLanguage}
-        hasUnsavedChanges={hasUnsavedChanges}
-        onSave={handleSave}
-        handleEditorMount={handleEditorMount}
-      />
+     <CodeEditorMaximizeModal
+  isOpen={isCodeEditorMaximized}
+  onClose={() => setIsCodeEditorMaximized(false)}
+  nerdMode={nerdMode}
+  setNerdMode={setnerdMode}
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  currentCode={currentCode}
+  currentSetCode={currentSetCode}
+  currentLanguage={currentLanguage}
+  hasUnsavedChanges={hasUnsavedChanges}
+  onSave={handleSave}
+  handleEditorMount={handleEditorMount}
+  openPreview={() => setIsFullscreenOpen(true)}   // 👈 added
+/>
+
     </div>
   )
 }

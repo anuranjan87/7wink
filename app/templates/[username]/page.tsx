@@ -25,7 +25,7 @@ const templates = [
   },
   {
     id: "2",
-    imageSrc: "https://49iw5aq3b5E3NyxK.public.blob.vercel-storage.com/ZmE1NjliZWZkNmUwZjEyMGRjNWFkYTM0Yjg0NzQ0NTA.jpg",
+    imageSrc: "https://i.postimg.cc/RVJmVNHh/MDcz-Mj-E0-NTNh-YWVk-N2-Q0-ODAy-ZWUx-Y2-Q4-Yj-Qx-Mz-Y4-Mj-I.jpg",
     title: "Elegant Craft",
   },
   {
@@ -341,11 +341,12 @@ export default function Page({ params }: PageProps) {
         <main className="flex flex-1 items-center justify-center px-4 py-16" style={{ zoom: 0.8 }}>
           <div className="text-center max-w-5xl w-full">
             <h1 className="text-white text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight">
-              Create your online presence. Your way.
+             founders launch a website in minutes!
             </h1>
             <p className="mt-8 text-lg md:text-xl text-white font-extrabold leading-relaxed max-w-4xl mx-auto">
-              Choose a look that reflects who you are. Tell us what you do, and our AI will craft compelling content
-              that is as sharp as your brand. The most powerful way to own your digital identity — starts here.
+            Stop fantasizing. Start validating. Just tell us what you do, and our AI creates a clear, professional site that speaks to your audience.  Sometimes a single visitor is all it takes. One person can enbrace your idea and reimagine their life — and yours too.
+
+
             </p>
           </div>
         </main>
