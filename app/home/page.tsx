@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ArrowRight, Code, Image as ImageIcon, Layout, Wand2 } from "lucide-react"
 import Link from "next/link"
+import { SignIn, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
 
 export default function TailwindGenieLanding() {
 return (
@@ -36,6 +38,23 @@ return (
       </nav>
     </header>
     <main className="flex-1 mx-auto">
+
+ <div className="p-6">
+      <h1 className="text-2xl font-bold">Clerk + Sonner Test</h1>
+
+      {/* Signed-out users see SignIn */}
+      <SignedOut>
+        <SignIn />
+      </SignedOut>
+
+      {/* Signed-in users see UserButton */}
+      <SignedIn>
+        <p>Welcome! You're signed in.</p>
+      
+       
+      </SignedIn>
+    </div>
+
       <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-primary/20 to-background">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center space-y-4 text-center">

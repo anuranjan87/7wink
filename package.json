@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.32.0",
     "@monaco-editor/react": "latest",
     "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
@@ -48,6 +49,7 @@
     "monaco-editor": "latest",
     "next": "15.2.4",
     "next-themes": "latest",
+    "ogl": "^0.0.104",
     "openai": "^5.10.1",
     "react": "^19",
     "react-day-picker": "latest",

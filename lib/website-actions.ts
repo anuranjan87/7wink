@@ -14,15 +14,15 @@ export interface WebsiteContent {
 
 
 const openai = new OpenAI({
-  apiKey: "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",
+  apiKey: process.env.OPENAI_API_KEY!,
 })
 
 
 export async function generateCodeWithAI(currentCode: string, prompt: string) {
-   console.log("ldldmmld")
+   
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       stream: true,
       messages: [
         {
@@ -165,6 +165,69 @@ export async function getWebsiteContent(username: string): Promise<WebsiteConten
     return null;
   }
 }
+
+
+export async function getAllWebsiteTemplates() {
+  try {
+    console.log("[v0] Fetching all templates")
+    const templates = await sql`
+      SELECT id, code, code_script, code_data 
+      FROM website_template 
+      ORDER BY id ASC
+    `
+    console.log("[v0] All templates fetched:", templates.length)
+    return templates
+  } catch (error) {
+    console.error("Failed to fetch all website templates:", error)
+    // Return mock data for development
+    return [
+      {
+        id: 1,
+        code: `<div>Template 1 Preview</div>`,
+        code_script: `console.log('Template 1 script');`,
+        code_data: `{"templateId": 1, "name": "Sample Template 1"}`,
+      },
+      {
+        id: 2,
+        code: `<div>Template 2 Preview</div>`,
+        code_script: `console.log('Template 2 script');`,
+        code_data: `{"templateId": 2, "name": "Sample Template 2"}`,
+      },
+      {
+        id: 3,
+        code: `<div>Template 3 Preview</div>`,
+        code_script: `console.log('Template 3 script');`,
+        code_data: `{"templateId": 3, "name": "Sample Template 3"}`,
+      },
+      {
+        id: 4,
+        code: `<div>Template 4 Preview</div>`,
+        code_script: `console.log('Template 4 script');`,
+        code_data: `{"templateId": 4, "name": "Sample Template 4"}`,
+      },
+      {
+        id: 5,
+        code: `<div>Template 5 Preview</div>`,
+        code_script: `console.log('Template 5 script');`,
+        code_data: `{"templateId": 5, "name": "Sample Template 5"}`,
+      },
+      {
+        id: 6,
+        code: `<div>Template 6 Preview</div>`,
+        code_script: `console.log('Template 6 script');`,
+        code_data: `{"templateId": 6, "name": "Sample Template 6"}`,
+      },
+      {
+        id: 7,
+        code: `<div>Template 7 Preview</div>`,
+        code_script: `console.log('Template 7 script');`,
+        code_data: `{"templateId": 7, "name": "Sample Template 7"}`,
+      },
+    ]
+  }
+}
+
+
 
 
 export async function getWebsiteHTML(username: string): Promise<string | null> {
@@ -488,3 +551,22 @@ console.log("helloe")
 
   return enquiries;
 }
+
+export async function usernameChecker(userId: string): Promise<string | null> {
+  try {
+    const result = await sql.query(
+      `SELECT name FROM alias WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0].name;
+  } catch (error) {
+    console.error("Error checking username:", error);
+    return null;
+  }
+}
+

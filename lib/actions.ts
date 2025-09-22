@@ -4,18 +4,19 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL!);
 
-export async function storeCharacter(name: string) {
+export async function storeCharacter(name: string, user: string) {
   try {
     // Store character alias
     await sql`
       CREATE TABLE IF NOT EXISTS alias (
         id SERIAL PRIMARY KEY,
         name VARCHAR(10) NOT NULL,
+        user_id VARCHAR,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
 
-    await sql`INSERT INTO alias (name) VALUES (${name})`;
+    await sql`INSERT INTO alias (name, user_id) VALUES (${name}, ${user})`;
 
     // Dynamic table names (sanitized to prevent SQL injection)
     const safeName = name.toLowerCase().replace(/[^a-z0-9_]/g, "");
