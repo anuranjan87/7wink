@@ -265,7 +265,7 @@ export default function Page({ params }: PageProps) {
   {templates.map((template, index) => (
     <motion.div
       key={template.id}
-      className="w-full max-w-xs rounded-lg border shadow-sm overflow-hidden bg-black border-stone-700 shadow-stone-950/40"
+      className="w-full max-w-xs rounded-lg border shadow-sm overflow-hidden bg-black border-stone-800 shadow-stone-900/40"
       initial={{ opacity: 0, y: 80 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.3 }}

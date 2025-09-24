@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { insertList } from "@/lib/insertlist"
 import dynamic from "next/dynamic"
-import { FullscreenPreviewModal, InsertButtonModal, CodeEditorMaximizeModal } from "@/components/modal"
+import { FullscreenPreviewModal, InsertButtonModal} from "@/components/modal"
 import { motion, AnimatePresence } from "framer-motion"
 import { LoadingCircle, SendIcon } from '@/components/icons'
 
@@ -668,13 +668,23 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         </div>
       </div>
 
-     <FullscreenPreviewModal
+    <FullscreenPreviewModal
   isOpen={isFullscreenOpen}
   onClose={() => setIsFullscreenOpen(false)}
   debouncedContent={debouncedContent}
   previewDevice={previewDevice}
   setPreviewDevice={setPreviewDevice}
-  openEditor={() => setIsCodeEditorMaximized(true)} // 👈 add this
+  openEditor={() => setIsCodeEditorMaximized(true)}
+  handleEditorMount={handleEditorMount}
+  currentCode={currentCode}
+  currentSetCode={currentSetCode}
+  currentLanguage={currentLanguage}
+  nerdMode={nerdMode}
+  setNerdMode={setnerdMode}
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}      // ✅ add this
+  onSave={handleSave}
+  hasUnsavedChanges={hasUnsavedChanges} // ✅ add this
 />
 
 
@@ -686,21 +696,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         onSubmit={handleInsertSubmit}
       />
 
-     <CodeEditorMaximizeModal
-  isOpen={isCodeEditorMaximized}
-  onClose={() => setIsCodeEditorMaximized(false)}
-  nerdMode={nerdMode}
-  setNerdMode={setnerdMode}
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  currentCode={currentCode}
-  currentSetCode={currentSetCode}
-  currentLanguage={currentLanguage}
-  hasUnsavedChanges={hasUnsavedChanges}
-  onSave={handleSave}
-  handleEditorMount={handleEditorMount}
-  openPreview={() => setIsFullscreenOpen(true)}   // 👈 added
-/>
+ 
 
     </div>
   )
