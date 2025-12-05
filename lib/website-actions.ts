@@ -172,7 +172,7 @@ export async function getAllWebsiteTemplates() {
     console.log("template fetched")
     const templates = await sql`
       SELECT id, code, code_script, code_data 
-      FROM website_Template_Creater
+      FROM website_template
       ORDER BY id ASC
     `
     console.log("[v0] All templates fetched:", templates.length)
@@ -473,7 +473,7 @@ export async function copyTemplateToUser(templateID: number, username: string) {
   try {
     const templateRes = await sql.query(
       `SELECT code, code_script, code_data 
-       FROM website_Template_Creater
+       FROM website_template
        WHERE id = $1`,
       [templateID],
     )

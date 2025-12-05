@@ -1,5 +1,5 @@
 "use client"
-import { Origami, Globe2Icon, LayoutDashboard, Loader2, X } from "lucide-react"
+import { Origami, Globe2Icon, LayoutDashboard, Loader2, X, ArrowLeft, Expand} from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
@@ -397,117 +397,135 @@ function TemplateList() {
 }
 
 
-  function PreviewModal() {
-  if (!showPreviewModal) return null;
-  const currentTemplateData = getCurrentTemplateData();
-      const [isDraftOpen, setIsDraftOpen] = useState(false)
+function PreviewModal() {
+  const [isDraftOpen, setIsDraftOpen] = useState(false);
+  if (!showPreviewModal || !previewTemplateId) return null;
 
-  
+  // Get index of current template
+  const currentIndex = allTemplateData.findIndex(
+    (t) => t.id === Number(previewTemplateId)
+  );
 
-  return (<>
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-center justify-center">
+  const currentTemplate = allTemplateData[currentIndex];
 
-      {/* Outer Container */}
-      <div className="bg-[#101012] rounded-2xl w-full h-full max-w-screen-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden">
+  const handleNext = () => {
+    if (currentIndex < allTemplateData.length - 1) {
+      const nextTemplate = allTemplateData[currentIndex + 1];
+      setPreviewTemplateId(nextTemplate.id.toString());
+      setTemplateData([nextTemplate]);
+    }
+  };
 
-        {/* Top Bar */}
-        <div
-          style={{ zoom: 0.85 }}
-          className="flex items-center justify-between px-8 py-4 
-          bg-[#18181B]/80 backdrop-blur-md border-b border-white/10"
-        >
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      const prevTemplate = allTemplateData[currentIndex - 1];
+      setPreviewTemplateId(prevTemplate.id.toString());
+      setTemplateData([prevTemplate]);
+    }
+  };
 
-          {/* Window buttons */}
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></span>
-            <span className="w-3 h-3 bg-yellow-400 rounded-full shadow-sm"></span>
-            <span className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></span>
-          </div>
-
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-center justify-center">
+        {/* Outer Container */}
+        <div className="bg-[#101012] rounded-2xl w-full h-full max-w-screen-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden">
           
+          {/* Top Bar */}
+          <div className="relative flex items-center justify-between px-8 py-4 bg-[#18181B]/80 backdrop-blur-md border-b border-white/10" style={{ zoom: 0.85 }}>
             
+            {/* Left: Window buttons */}
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></span>
+              <span className="w-3 h-3 bg-yellow-400 rounded-full shadow-sm"></span>
+              <span className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></span>
+            </div>
 
+            {/* Center: Navigation arrows */}
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-4">
+              <button
+                onClick={handlePrev}
+                className="p-1 rounded hover:bg-white/10"
+                disabled={currentIndex === 0}
+              >
+                <ArrowLeft className="w-4 h-4 text-white" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="p-1 rounded hover:bg-white/10"
+                disabled={currentIndex === allTemplateData.length - 1}
+              >
+                <ArrowRight className="w-4 h-4 text-white" />
+              </button>
+            </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-4">
-
-            {/* Close */}
-               <button
-            type="button"
-            onClick={() => setIsDraftOpen(true)}
-            className="text-stone-300 flex items-center "
-          >Full View
-          </button>
-            <button
-              onClick={() => setShowPreviewModal(false)}
-              className="p-2 rounded-lg hover:bg-white/10 transition text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Make It Yours */}
-            <button
-              onClick={() => setShowConfirmModal(true)}
-              disabled={!currentTemplateData}
-              className="
-                relative inline-flex items-center justify-center gap-2
-                px-4 py-2 text-sm font-medium text-white rounded-lg
-                bg-white/5 border border-white/20 backdrop-blur-md
-                shadow-[inset_0_1px_0px_rgba(255,255,255,0.4),0_0_8px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.25)]
-                hover:bg-white/15 transition-all duration-300
-                before:absolute before:inset-0 before:rounded-lg 
-                before:bg-gradient-to-br before:from-white/50 before:via-transparent 
-                before:to-transparent before:opacity-60 before:pointer-events-none
-                disabled:opacity-40 disabled:cursor-not-allowed
-              "
-            >
-              Make It Yours
-              <ArrowRight className="w-4 h-4" />
-            </button>
-
+            {/* Right: Actions */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setIsDraftOpen(true)}
+                className="text-stone-300 px-3 py-1 rounded-lg hover:bg-white/10 transition"
+              >
+                <Expand className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                disabled={!currentTemplate}
+                className="relative inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-white/5 border border-white/20 backdrop-blur-md hover:bg-white/15 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Make It Yours
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Content Area */}
-        <div className="flex-1 px-8 py-2 overflow-hidden" style={{ zoom: 0.8 }}>
-          {isLoadingTemplate ? (
-            <div className="flex items-center justify-center h-full text-white/90">
-              <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="ml-2 text-sm">Loading template preview...</span>
-            </div>
-          ) : templateData ? (
-            <motion.div
-              key={previewTemplateId}
-              initial={{ opacity: 0, scale: 0.96, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 20 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="w-full h-full"
-            >
-              <iframe
-                srcDoc={createCombinedHtml(templateData)}
-                className="w-full h-full border-0 rounded-xl bg-white shadow-lg"
-                title="Template Preview"
-                sandbox="allow-scripts allow-same-origin"
-              />
-            </motion.div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-white/70">
-              No template data available
-            </div>
-          )}
+          {/* Content Area */}
+          <div className="flex-1 w-full h-full overflow-hidden">
+            {isLoadingTemplate ? (
+              <div className="flex items-center justify-center h-full text-white/90">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="ml-2 text-sm">Loading template preview...</span>
+              </div>
+            ) : currentTemplate ? (
+              <motion.div
+                key={currentTemplate.id}
+                initial={{ opacity: 0, scale: 0.96, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 20 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="w-full h-full"
+              >
+                <iframe
+                  srcDoc={createCombinedHtml([currentTemplate])}
+                  className="w-full h-full border-0 rounded-xl bg-white shadow-lg"
+                  title="Template Preview"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              </motion.div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-white/70">
+                No template data available
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
-    
-             <DraftView
-            isOpen={isDraftOpen}
-            onClose={() => setIsDraftOpen(false)}
-            debouncedContent={createCombinedHtml(templateData)}
-          /></>
+      {/* DraftView Fullscreen Modal */}
+      <DraftView
+        isOpen={isDraftOpen}
+        onClose={() => setIsDraftOpen(false)}
+        debouncedContent={createCombinedHtml([currentTemplate])}
+      />
+    </>
   );
 }
+
 
 function ConfirmModal() {
   if (!showConfirmModal) return null;
