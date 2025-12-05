@@ -448,55 +448,90 @@ useEffect(() => {
 
   return (
    <div className="flex flex-col">
-  <div className="px-4 mt-2 rounded-xl" style={{ zoom: 0.9 }}>
-    <div className="flex items-center shadow-2xl gap-1 w-full">
-      
-      {/* Undo / Redo Section */}
-      <div className="flex gap-1.5 px-9">
-        <Undo2
-          className={`w-4 h-4 cursor-pointer ${
-            historyIndex === 0 ? "text-stone-600" : "text-stone-300"
-          }`}
-          onClick={handleUndo}
-        />
-        <Redo2
-          className={`w-4 h-4 cursor-pointer ${
-            historyIndex === history.length - 1 ? "text-stone-600" : "text-stone-300"
-          }`}
-          onClick={handleRedo}
-        />
-      </div>
+  <div className="w-full px-4 mt-5" style={{ zoom: 0.9 }}>
+  <div
+    className="
+      flex items-center gap-4 w-full rounded-xl 
+      bg-black/40 border border-white/10 
+      shadow-[0_0_25px_rgba(0,0,0,0.4),inset_0_0_15px_rgba(255,255,255,0.03)]
+      backdrop-blur-md py-3 px-4
+    "
+  >
+    {/* Publish */}
+    <button
+      onClick={handlePublish}
+      className="
+        flex items-center justify-center 
+        text-yellow-400 tracking-wider 
+        border border-yellow-400/70 
+        px-6 py-1.5 rounded-md 
+        text-sm font-semibold 
+        hover:bg-yellow-400 hover:text-black 
+        transition-all duration-150
+      "
+    >
+      {isPublishing ? (
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-yellow-300" />
+          <span className="font-mono">Publishing...</span>
+        </div>
+      ) : (
+        "Publish"
+      )}
+    </button>
 
-      {/* Publish Button */}
-      <a onClick={handlePublish} className="flex items-center text-blue-400 cursor-pointer">
-        {isPublishing ? (
-          <>
-            <Loader2 className="mr-2.5 h-4 w-4 animate-spin text-yellow-400" />
-            <div className="text-yellow-400 text-sm font-mono mr-1">Publishing...</div>
-          </>
-        ) : (
-          <div className="text-yellow-400 text-sm border py-1 px-8 border-yellow-400 rounded-sm font-serif mr-4 tracking-widest underline-offset-2">
-            Publish
-          </div>
-        )}
-      </a>
+    {/* Undo / Redo */}
+    <div className="flex items-center gap-2 ml-2">
+      <button
+        onClick={handleUndo}
+        disabled={historyIndex === 0}
+        className={`
+          p-2 rounded-md transition-all 
+          ${historyIndex === 0 ? "text-gray-700" : "text-gray-300 hover:bg-white/10"}
+        `}
+      >
+        <Undo2 className="w-4 h-4" />
+      </button>
 
-      {/* Drawer aligned to right */}
-    <div className="ml-auto" style={{ zoom: 0.6 }}>
-  <Sheet>
-    <SheetTrigger asChild>
-      <Button variant="outline">Open Drawer</Button>
-    </SheetTrigger>
+      <button
+        onClick={handleRedo}
+        disabled={historyIndex === history.length - 1}
+        className={`
+          p-2 rounded-md transition-all 
+          ${historyIndex === history.length - 1 ? "text-gray-700" : "text-gray-300 hover:bg-white/10"}
+        `}
+      >
+        <Redo2 className="w-4 h-4" />
+      </button>
+    </div>
 
-    <SheetContent side="right" className="bg-black border-white/10">
+    {/* MAGIC INPUT — Right Aligned */}
+    <div className="ml-auto" style={{ zoom: 0.7 }}>
+      <Sheet>
+        <SheetTrigger asChild>
+          <button
+            className="
+              bg-yellow-500 text-black 
+              font-bold text-sm px-4 py-1.5 
+              rounded-md border-2 border-black
+              hover:bg-yellow-400 transition-all
+              shadow-[0_3px_0px_0px_rgba(0,0,0,0.8)]
+              active:translate-y-[1px] active:shadow-none
+            "
+          >
+            Magic Box
+          </button>
+        </SheetTrigger>
 
-    <VisuallyHidden>
-      <SheetTitle>Hidden Title</SheetTitle>
-    </VisuallyHidden>
+        <SheetContent side="right" className="bg-black border-white/10">
+          <VisuallyHidden>
+            <SheetTitle>Hidden</SheetTitle>
+          </VisuallyHidden>
+   
       <div
         className="
           items-center gap-2
-          w-full max-w-2xl mx-auto mt-2 px-3 py-1
+          w-full max-w-2xl mx-auto mt-3 px-3 py-1
           rounded-xl
           border border-white/10
           bg-white/5 backdrop-blur-sm
@@ -615,8 +650,7 @@ useEffect(() => {
 </AnimatePresence>
 
       </div>
-// Panel starts here
-      <div className="-mt-2  flex h-[calc(100vh-120px)] gap-3">
+      <div className="-mt-0.5  flex h-[calc(100vh-120px)] gap-3">
         {/* Preview Panel */}
         <div className="flex-1 bg-[#030712] border-t border-gray-800 rounded-t-lg">
           <div className="px-4 py-1 flex justify-between">
