@@ -462,59 +462,34 @@ export function FullscreenPreviewModal({
 
 
 
-
-
-
-
-
-
-
-
-
-type CodeEditorMaximizeModalProps = {
+interface DraftViewProps {
   isOpen: boolean
   onClose: () => void
-  nerdMode: boolean
-  setNerdMode: (value: boolean) => void
-  activeTab: string
-  setActiveTab: (tab: string) => void
-  currentCode: string
-  currentSetCode: (code: string) => void
-  currentLanguage: string
-  hasUnsavedChanges: boolean
-  onSave: () => void
-  handleEditorMount: (editor: any, monaco: any) => void
+  debouncedContent: string
 }
 
+export function DraftView({ isOpen, onClose, debouncedContent }: DraftViewProps) {
+  if (!isOpen) return null
+
+  return (
+    <div
+      className="fixed inset-0 bg-black z-[900] flex items-center justify-center"
+    >
+      {/* Floating Close Button */}
+                <button
+  onClick={onClose}
+  className="absolute top-4 right-4 z-[910] p-2 bg-white rounded-full shadow-lg border border-black/30 hover:bg-gray-200 transition text-black font-bold"
+>
+  ✕
+</button>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      <iframe
+        srcDoc={debouncedContent}
+        title="Preview"
+        className="w-full h-full"
+        sandbox="allow-scripts allow-same-origin"
+      />
+    </div>
+  )
+}

@@ -1,45 +1,72 @@
-import { Globe2Icon, LayoutDashboard, Origami, Recycle, SwatchBook, Undo2, Redo } from "lucide-react"
+"use client";
+import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Globe2Icon, Pickaxe, Gauge, SwatchBook, Recycle } from "lucide-react";
 
-interface NavigationSidebarProps {
-  username: string
-}
+export function NavigationSidebar({ username }: { username: string }) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
 
-export function NavigationSidebar({ username }: NavigationSidebarProps) {
+  const handleClick = (name: string, href: string) => {
+    if (pathname !== href) {
+      setLoading(name);
+    }
+  };
+
+  const linkClasses = (name: string) =>
+    `inline-flex flex-col items-center justify-center text-[9px] text-stone-400 text-center leading-tight hover:text-white transition-colors ${
+      loading === name ? "opacity-50" : ""
+    }`;
+
   return (
     <aside className="w-10 h-screen border-r border-transparent flex flex-col justify-center items-center gap-12 bg-black">
       <a
         href={`/${username}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex flex-col items-center justify-center text-[9px] text-stone-400 text-center leading-tight hover:text-white transition-colors"
+        className={linkClasses("site")}
       >
-        <Globe2Icon size={18} strokeWidth={1.2} className="text-stone-300 hover:text-white transition-colors" />
-        <span className="mt-1 break-words">Site</span>
+        <Globe2Icon size={18} strokeWidth={1.2} />
+        <span>{loading === "site" ? "Loading..." : "Site"}</span>
       </a>
 
-      <a
+      <Link
+        href={`/edit/${username}`}
+        onClick={() => handleClick("edit", `/edit/${username}`)}
+        className={linkClasses("edit")}
+      >
+        <Pickaxe size={18} strokeWidth={1.5} />
+        <span>{loading === "edit" ? "Loading..." : "Edit"}</span>
+      </Link>
+
+      <Link
         href={`/dashboard/${username}`}
-        className="inline-flex flex-col items-center justify-center text-[9px] text-stone-400 text-center leading-tight hover:text-white transition-colors"
+        onClick={() => handleClick("dash", `/dashboard/${username}`)}
+        className={linkClasses("dash")}
       >
-        <LayoutDashboard size={18} strokeWidth={1.5} className="text-stone-300 hover:text-white transition-colors" />
-        <span className="mt-1 break-words">Dash</span>
-      </a>
+        <Gauge size={18} strokeWidth={1.5} />
+        <span>{loading === "dash" ? "Loading..." : "Dash"}</span>
+      </Link>
+
+      <Link
+        href={`/templates/${username}`}
+        onClick={() => handleClick("templates", `/templates/${username}`)}
+        className={linkClasses("templates")}
+      >
+        <SwatchBook size={18} strokeWidth={1.5} />
+        <span>{loading === "templates" ? "Loading..." : "Template"}</span>
+      </Link>
 
       <a
         href={`/templates/${username}`}
-        className="inline-flex flex-col items-center justify-center text-[9px] text-zinc-400 text-center leading-tight hover:text-white transition-colors"
+        onClick={() => handleClick("restore", `/templates/${username}`)}
+        className={linkClasses("restore")}
       >
-        <SwatchBook size={18} strokeWidth={1.5} className="text-zinc-300 hover:text-white transition-colors" />
-        <span className="mt-1 break-words">Template</span>
-      </a>
-
-       <a
-        href={`/templates/${username}`}
-        className="inline-flex flex-col items-center justify-center text-[9px] text-zinc-400 text-center leading-tight hover:text-white transition-colors"
-      >
-        <Recycle size={18} strokeWidth={1.5} className="text-zinc-300 hover:text-white transition-colors" />
-        <span className="mt-1 break-words">Restore</span>
+        <Recycle size={18} strokeWidth={1.5} />
+        <span>{loading === "restore" ? "Loading..." : "Restore"}</span>
       </a>
     </aside>
-  )
+  );
 }

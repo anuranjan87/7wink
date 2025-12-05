@@ -2,7 +2,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image} from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image, Link} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/sheet"
 import { insertList } from "@/lib/insertlist"
 import dynamic from "next/dynamic"
-import { FullscreenPreviewModal} from "@/components/modal"
+import { FullscreenPreviewModal, DraftView} from "@/components/modal"
+
 import { motion, AnimatePresence } from "framer-motion"
 import { LoadingCircle, SendIcon } from '@/components/icons'
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -100,6 +101,8 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [isCodeEditorMaximized, setIsCodeEditorMaximized] = useState(false)
   const [history, setHistory] = useState<string[]>([initialContent.html])
   const [historyIndex, setHistoryIndex] = useState(0)
+  const [isDraftOpen, setIsDraftOpen] = useState(false)
+
 
 
 
@@ -503,6 +506,18 @@ useEffect(() => {
       >
         <Redo2 className="w-4 h-4" />
       </button>
+
+
+
+     <button
+  type="button"
+  onClick={() => setIsDraftOpen(true)}
+  className="text-gray-300"
+>
+  <Link className="w-4 h-4" />
+</button>
+
+
     </div>
 
     {/* MAGIC INPUT — Right Aligned */}
@@ -787,6 +802,14 @@ useEffect(() => {
 
         </div>
       </div>
+
+    <DraftView
+  isOpen={isDraftOpen}
+  onClose={() => setIsDraftOpen(false)}
+  debouncedContent={debouncedContent}
+/>
+
+
 
     <FullscreenPreviewModal
   isOpen={isFullscreenOpen}

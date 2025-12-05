@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import Chart from "@/components/chart"
 import Enquiry from "@/components/enquiry"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { NavigationSidebar } from "@/components/navigation-sidebar"
+
 
 interface PageProps {
   params: {
@@ -19,8 +21,11 @@ export default async function DashboardPage({ params }: PageProps) {
 
 
     return (
-      <div className="min-h-screen bg-black">
-        <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="min-h-screen flex bg-black">
+             <div className="sticky top-0 z-20">   <NavigationSidebar username={username} /></div>
+                          <div className="flex-1 max-w-4xl mx-auto py-8 px-4">
+
+
           <div className="bg-gradient-to-br from-slate-900 via-black to-slate-950 rounded-lg shadow-[0_6px_28px_rgb(0,0,0,0.4)] border border-slate-800 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Visit Analytics */}

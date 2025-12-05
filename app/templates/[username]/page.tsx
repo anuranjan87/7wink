@@ -3,13 +3,16 @@ import { Origami, Globe2Icon, LayoutDashboard, Loader2, X } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Link } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { copyTemplateToUser, getAllWebsiteTemplates } from "@/lib/website-actions"
 import { motion, AnimatePresence } from "framer-motion"
 import mat from "@/asset/mat.gif";
 import { description } from "@/components/chart"
 import { Textarea } from "@/components/ui/textarea"
+import { DraftView} from "@/components/modal"
+
+
 
 
 
@@ -167,6 +170,8 @@ export default function Page({ params }: PageProps) {
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false)
   const [allTemplateData, setAllTemplateData] = useState<any[]>([])
   const [isLoadingAllTemplates, setIsLoadingAllTemplates] = useState(true)
+    
+  
 
   const createCombinedHtml = (templateData: any) => {
     if (!templateData || templateData.length === 0) return ""
@@ -395,8 +400,11 @@ function TemplateList() {
   function PreviewModal() {
   if (!showPreviewModal) return null;
   const currentTemplateData = getCurrentTemplateData();
+      const [isDraftOpen, setIsDraftOpen] = useState(false)
 
-  return (
+  
+
+  return (<>
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-center justify-center">
 
       {/* Outer Container */}
@@ -416,10 +424,20 @@ function TemplateList() {
             <span className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></span>
           </div>
 
+          
+            
+
+
           {/* Actions */}
           <div className="flex items-center gap-4">
 
             {/* Close */}
+               <button
+            type="button"
+            onClick={() => setIsDraftOpen(true)}
+            className="text-stone-300 flex items-center "
+          >Full View
+          </button>
             <button
               onClick={() => setShowPreviewModal(false)}
               className="p-2 rounded-lg hover:bg-white/10 transition text-white"
@@ -481,6 +499,13 @@ function TemplateList() {
         </div>
       </div>
     </div>
+
+    
+             <DraftView
+            isOpen={isDraftOpen}
+            onClose={() => setIsDraftOpen(false)}
+            debouncedContent={createCombinedHtml(templateData)}
+          /></>
   );
 }
 
@@ -597,22 +622,7 @@ function ConfirmModal() {
 
       <div className="flex">
         {/* Left Sidebar */}
-        <aside className="w-14 p-3 flex flex-col items-center gap-8 mt-9" style={{ zoom: 0.8 }}>
-          <a
-            href={`/${username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center"
-          >
-            <Globe2Icon color="grey" />
-          </a>
-          <a href={`/dashboard/${username}`} className="inline-flex items-center justify-center">
-            <LayoutDashboard color="grey" />
-          </a>
-          <a href={`/templates`} className="inline-flex items-center justify-center">
-            <Origami color="grey" />
-          </a>
-        </aside>
+       
 
         {/* Main Content */}
         <main className="flex flex-1 items-center justify-center px-4 py-16" style={{ zoom: 0.8 }}>
