@@ -38,10 +38,8 @@ const clientIp = forwardedFor?.split(",")[0] || realIp || "unknown"
           const email = form.querySelector("[name='email']")?.value || ""
           const message = form.querySelector("[name='your_message']")?.value || ""
 
-          window.parent.postMessage({
-            formData: { email, message },
-            username: "${username}"
-          }, "*")
+
+          
         })
       }
     })
@@ -62,7 +60,7 @@ const clientIp = forwardedFor?.split(",")[0] || realIp || "unknown"
 
     // Inject main script logic
     if (content.script) {
-      finalHtml = injectIntoHtml(finalHtml, `<script>${content.script}</script>`)
+      finalHtml = injectIntoHtml(finalHtml, `<script type="text/babel">${content.script}</script>`)
     }
 
     // Inject forceLink handler

@@ -8,7 +8,10 @@ interface IframeWithLinkHandlerProps {
   username: string
 }
 
-export default function IframeWithLinkHandler({ content, username }: IframeWithLinkHandlerProps) {
+export default function IframeWithLinkHandler({
+  content,
+  username,
+}: IframeWithLinkHandlerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
@@ -18,25 +21,23 @@ export default function IframeWithLinkHandler({ content, username }: IframeWithL
       // 🔗 External link handler
       if (event.data.openLink) {
         window.open(event.data.openLink, "_blank", "noopener,noreferrer")
+        return
       }
 
-      // 📩 Form submission handler
+      // ✅ ✅ ✅ FINAL FORM HANDLER
       if (event.data.formData) {
         const { email, message } = event.data.formData
 
-        // Build FormData for server action
+        console.log("✅ FINAL MESSAGE RECEIVED:", message)
+
         const formData = new FormData()
         formData.append("email", email)
         formData.append("your_message", message)
 
         try {
-          console.log("[IframeWithLinkHandler] Sending enquiry for:", username)
-          const result = await sendEnquiry(username, formData)
-
-          console.log("[IframeWithLinkHandler] Result:", result)
+          await sendEnquiry(username, formData)
           alert("✅ Form submitted successfully!")
         } catch (error) {
-          console.error("[IframeWithLinkHandler] Submission failed:", error)
           alert("❌ Failed to submit form")
         }
       }

@@ -21,8 +21,7 @@ export default function Enquiry({ username }: EnquiryProps) {
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null)
 
   React.useEffect(() => {
-    console.log(username)
-                console.log("usernamehlll")
+    
     async function fetchEnquiries() {
         
       const result = await getEnquiries(username)
@@ -38,7 +37,7 @@ export default function Enquiry({ username }: EnquiryProps) {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const messageDay = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate())
 
-    const timeString = messageDate.toLocaleTimeString("en-US", {
+    const timeString = messageDate.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -49,7 +48,7 @@ export default function Enquiry({ username }: EnquiryProps) {
     } else if (messageDay.getTime() === today.getTime() - 86400000) {
       return `Yesterday (${timeString})`
     } else {
-      const dayName = messageDate.toLocaleDateString("en-US", { weekday: "long" })
+      const dayName = messageDate.toLocaleDateString("en-IN", { weekday: "long" })
       return `${dayName} (${timeString})`
     }
   }
@@ -84,9 +83,11 @@ export default function Enquiry({ username }: EnquiryProps) {
               <div>
                 <label className="text-sm font-medium text-gray-400">Message:</label>
                 <div className="mt-2 p-4 bg-gray-900 rounded-lg border border-gray-800">
-                  <p className="text-base leading-relaxed whitespace-pre-wrap text-gray-100">
-                    {selectedEnquiry.message || "No message provided"}
-                  </p>
+                 <p
+                className="text-base leading-relaxed whitespace-pre-wrap text-gray-100">
+                {selectedEnquiry.message || "No message provided"}
+              </p>
+
                 </div>
               </div>
             </div>

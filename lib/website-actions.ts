@@ -169,10 +169,10 @@ export async function getWebsiteContent(username: string): Promise<WebsiteConten
 
 export async function getAllWebsiteTemplates() {
   try {
-    console.log("[v0] Fetching all templates")
+    console.log("template fetched")
     const templates = await sql`
       SELECT id, code, code_script, code_data 
-      FROM website_template 
+      FROM website_Template_Creater
       ORDER BY id ASC
     `
     console.log("[v0] All templates fetched:", templates.length)
@@ -473,7 +473,7 @@ export async function copyTemplateToUser(templateID: number, username: string) {
   try {
     const templateRes = await sql.query(
       `SELECT code, code_script, code_data 
-       FROM website_template 
+       FROM website_Template_Creater
        WHERE id = $1`,
       [templateID],
     )
@@ -539,7 +539,7 @@ export async function getEnquiries(username: string) {
 console.log("helloe")
   const enquiries = rows.map((row) => {
     const emailMatch = row.entry.match(/Email:\s*([^,]+)/);
-    const messageMatch = row.entry.match(/Message:\s*(.*)/);
+    const messageMatch = row.entry.match(/Message:\s*([\s\S]*)/);
 
     return {
       id: row.id,

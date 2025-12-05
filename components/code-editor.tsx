@@ -2,16 +2,29 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save } from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { insertList } from "@/lib/insertlist"
 import dynamic from "next/dynamic"
-import { FullscreenPreviewModal, InsertButtonModal} from "@/components/modal"
+import { FullscreenPreviewModal} from "@/components/modal"
 import { motion, AnimatePresence } from "framer-motion"
 import { LoadingCircle, SendIcon } from '@/components/icons'
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -78,8 +91,6 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [aiPrompt, setAiPrompt] = useState("")
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [isOpen, setIsOpen] = useState(false)
-  const [selected, setSelected] = useState<number | null>(null)
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false)
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop")
   const iframeRef = useRef<any>(null)
@@ -87,6 +98,10 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 })
   const [debouncedContent, setDebouncedContent] = useState(initialContent.html)
   const [isCodeEditorMaximized, setIsCodeEditorMaximized] = useState(false)
+  const [history, setHistory] = useState<string[]>([initialContent.html])
+  const [historyIndex, setHistoryIndex] = useState(0)
+
+
 
   useEffect(() => {
     setCodeHtml(initialContent.html)
@@ -98,6 +113,8 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
       data: initialContent.data,
     })
 
+    
+
     // Auto-update preview for initial load
     const safeHtml = initialContent.html || ""
     const safeScript = initialContent.script || ""
@@ -105,9 +122,12 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
 
     let combinedHtml = safeHtml
     combinedHtml = combinedHtml.replace('<script src="data.js"></script>', `<script>\n${safeData}\n</script>`)
-    combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script>\n${safeScript}\n</script>`)
+combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script type="text/babel">\n${safeScript}\n</script>`);
+
+
     setDebouncedContent(combinedHtml)
     setIsManualEdit(false)
+    console.log(combinedHtml)
   }, [initialContent])
 
   useEffect(() => {
@@ -117,7 +137,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     setHasUnsavedChanges(hasChanges && isManualEdit)
   }, [codeHtml, codeScript, codeData, savedContent, isManualEdit])
 
-  const updatePreviewImmediately = (html: string, script: string, data: string) => {
+ const updatePreviewImmediately = (html: string, script: string, data: string) => {
     captureScrollPosition()
 
     let combinedHtml = html || ""
@@ -125,7 +145,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     const safeData = data || ""
 
     combinedHtml = combinedHtml.replace('<script src="data.js"></script>', `<script>\n${safeData}\n</script>`)
-    combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script>\n${safeScript}\n</script>`)
+    combinedHtml = combinedHtml.replace('<script src="script.js"></script>', `<script type="text/babel">\n${safeScript}\n</script>`)
     setDebouncedContent(combinedHtml)
 
     setSavedContent({
@@ -135,12 +155,71 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     })
   }
 
-  const handleSave = () => {
-    updatePreviewImmediately(codeHtml, codeScript, codeData)
-    setHasUnsavedChanges(false)
-    setIsManualEdit(false)
+  //undo redo logic starts
+const handleUndo = () => {
+  if (historyIndex > 0) {
+    const newIndex = historyIndex - 1
+    setHistoryIndex(newIndex)
+    const previous = history[newIndex]
+    setCodeHtml(previous) // or split into data/script if you store separately
+    setDebouncedContent(previous)
   }
+}
 
+const handleRedo = () => {
+  if (historyIndex < history.length - 1) {
+    const newIndex = historyIndex + 1
+    setHistoryIndex(newIndex)
+    const next = history[newIndex]
+    setCodeHtml(next)
+    setDebouncedContent(next)
+  }
+}
+
+
+
+
+
+
+ const handleSave = () => {
+  const combinedHtml = codeHtml
+    .replace('<script src="data.js"></script>', `<script>\n${codeData}\n</script>`)
+    .replace('<script src="script.js"></script>', `<script type="text/babel">\n${codeScript}\n</script>`)
+
+  // If we are in the middle of history (redo possible), discard future redo states
+  const newHistory = history.slice(0, historyIndex + 1)
+  newHistory.push(combinedHtml)
+  setHistory(newHistory)
+  setHistoryIndex(newHistory.length - 1)
+
+  setDebouncedContent(combinedHtml)
+  setSavedContent({
+    html: codeHtml,
+    script: codeScript,
+    data: codeData,
+  })
+  setHasUnsavedChanges(false)
+  setIsManualEdit(false)
+}
+
+
+// Ctrl+S / Cmd+S save shortcut
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault(); // Prevent browser's default save dialog
+      handleSave();
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [handleSave]); // Ensure handleSave is in dependencies
+
+// sroll logic starts
   const captureScrollPosition = () => {
     if (iframeRef.current?.contentWindow && !isRestoringScroll) {
       try {
@@ -182,84 +261,41 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         const doc = iframeRef.current.contentWindow.document
         const script = doc.createElement("script")
         script.textContent = `
-          let preservedScrollPosition = { x: ${scrollPosition.x}, y: ${scrollPosition.y} };
-          
-          const preserveScroll = () => {
-            preservedScrollPosition = { x: window.scrollX, y: window.scrollY };
-            window.parent.postMessage({ type: 'scrollUpdate', position: preservedScrollPosition }, '*');
-          };
-          
-          const restoreScroll = () => {
-            requestAnimationFrame(() => {
-              window.scrollTo(preservedScrollPosition.x, preservedScrollPosition.y);
-            });
-          };
-          
-          const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-          if (originalInnerHTML) {
-            Object.defineProperty(Element.prototype, 'innerHTML', {
-              set: function(value) {
-                preserveScroll();
-                originalInnerHTML.set.call(this, value);
-                setTimeout(restoreScroll, 10);
-              },
-              get: originalInnerHTML.get
-            });
-          }
-          
-          const originalAppendChild = Element.prototype.appendChild;
-          Element.prototype.appendChild = function(child) {
-            preserveScroll();
-            const result = originalAppendChild.call(this, child);
-            setTimeout(restoreScroll, 10);
-            return result;
-          };
-          
-          const originalRemoveChild = Element.prototype.removeChild;
-          Element.prototype.removeChild = function(child) {
-            preserveScroll();
-            const result = originalRemoveChild.call(this, child);
-            setTimeout(restoreScroll, 10);
-            return result;
-          };
-          
-          const originalInsertBefore = Element.prototype.insertBefore;
-          Element.prototype.insertBefore = function(newNode, referenceNode) {
-            preserveScroll();
-            const result = originalInsertBefore.call(this, newNode, referenceNode);
-            setTimeout(restoreScroll, 10);
-            return result;
-          };
-          
-          const observer = new MutationObserver((mutations) => {
-            let shouldRestore = false;
-            mutations.forEach((mutation) => {
-              if (mutation.type === 'childList' && (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-                shouldRestore = true;
-              }
-            });
-            if (shouldRestore) {
-              setTimeout(restoreScroll, 20);
-            }
-          });
-          
-          window.addEventListener('load', () => {
-            observer.observe(document.body, {
-              childList: true,
-              subtree: true,
-              attributes: false
-            });
-            
-            setTimeout(() => {
-              window.scrollTo(preservedScrollPosition.x, preservedScrollPosition.y);
-            }, 100);
-          });
-          
-          let scrollTimeout;
-          window.addEventListener('scroll', () => {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(preserveScroll, 100);
-          });
+                        (() => {
+                let scrollPos = { x: window.scrollX, y: window.scrollY };
+                let scrollTimeout;
+
+                // Save scroll position
+                const saveScroll = () => {
+                  scrollPos = { x: window.scrollX, y: window.scrollY };
+                  window.parent?.postMessage({ type: "scrollUpdate", position: scrollPos }, "*");
+                };
+
+                // Restore scroll position
+                const restoreScroll = () => {
+                  requestAnimationFrame(() => {
+                    window.scrollTo(scrollPos.x, scrollPos.y);
+                  });
+                };
+
+                // Debounced scroll listener
+                window.addEventListener("scroll", () => {
+                  clearTimeout(scrollTimeout);
+                  scrollTimeout = setTimeout(saveScroll, 100);
+                });
+
+                // Observe DOM changes (append/remove/etc.)
+                const observer = new MutationObserver(() => {
+                  // Restore after small delay to let layout settle
+                  setTimeout(restoreScroll, 20);
+                });
+
+                window.addEventListener("load", () => {
+                  observer.observe(document.body, { childList: true, subtree: true });
+                  setTimeout(restoreScroll, 100); // initial restore
+                });
+              })();
+
         `
         doc.head.appendChild(script)
       } catch (error) {
@@ -298,26 +334,9 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
     }
   }, [debouncedContent, isRestoringScroll])
 
-  const handleInsertSubmit = () => {
-    if (selected === null) return
+// scroll logic ends
 
-    const htmlString = insertList[selected].code
-
-    setCodeHtml((prevHtml) => {
-      const modalIdRegex = /<[^>]*id=["']modal_insert["'][^>]*>[\s\S]*?<\/[^>]+>/i
-
-      if (modalIdRegex.test(prevHtml)) {
-        return prevHtml.replace(modalIdRegex, htmlString)
-      } else if (prevHtml.includes("</body>")) {
-        return prevHtml.replace("</body>", `${htmlString}\n</body>`)
-      } else {
-        return prevHtml + htmlString
-      }
-    })
-
-    setIsOpen(false)
-    setSelected(null)
-  }
+  
 
   const handlePublish = async () => {
     setIsPublishing(true)
@@ -349,9 +368,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
       const isBlank = !initialContent?.data || initialContent.data.trim() === ""
       console.log("isBlank:", isBlank, "initialContent.data:", initialContent.data)
 
-      const result = isBlank
-        ? await generateCodeWithAIBlank(codeHtml, aiPrompt)
-        : await generateCodeWithAI(codeData, aiPrompt)
+      const result = isBlank ? await generateCodeWithAIBlank(codeHtml, aiPrompt) : await generateCodeWithAI(codeData, aiPrompt)
 
       if (result.success && result.generatedCode) {
         if (isBlank) {
@@ -387,6 +404,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
       return () => clearTimeout(timer)
     }
   }, [message])
+
 
   const handleManualCodeChange = (setter: (value: string) => void) => (value: string) => {
     setter(value)
@@ -429,80 +447,165 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="bg-[#181818] px-4 mt-2 rounded-xl" style={{ zoom: 0.9 }}>
-        <div className="flex items-center shadow-2xl gap-1">
-          <div className="flex-1 font-sans  text-white flex max-w-2xl mx-auto mt-1 rounded-xl border-2 border-dotted border-gray-700 shadow-2xl px-2 py-1 min-w-sm focus-within:border-gray-300">
-            <input
-              type="text"
-              ref={inputRef}
-              placeholder="Tell us your site idea — name, vibe, what it does..."
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              onKeyDown={handleKeyPress}
-              disabled={isGenerating}
-              className="flex-1 w-full px-6 py-2 placeholder:text-stone-400 placeholder:font-normal placeholder:tracking-wider bg-transparent border-none rounded-none rounded-l focus:outline-none focus:ring-0 caret-white text-teal-400 placeholder:opacity-100 focus:placeholder-opacity-0"
-            />
-            <button
-              onClick={handleAIGenerate}
-              disabled={isGenerating || !aiPrompt.trim()}
-              type="button"
-              className="relative w-full md:w-auto px-6 py-2 overflow-hidden text-white transition-all duration-100 bg-black border-l border-black rounded-none rounded-r active:scale-95 will-change-transform disabled:opacity-50"
-            >
-              <span className="flex items-center transition-all opacity-1">
-                {isGenerating ? (
-                  <>
-                    <LoadingCircle />
-                    <span className="mx-auto text-sm font-semibold truncate whitespace-nowrap text-white px-2">
-                      Generating...
-                    </span>
-                  </>
-                ) :  (
-          <SendIcon className={`h-4 w-4 ${aiPrompt.length === 0 ? "text-muted-foreground" : "text-primary-foreground"}`} />
-        )}
-              </span>
-            </button>
+   <div className="flex flex-col">
+  <div className="px-4 mt-2 rounded-xl" style={{ zoom: 0.9 }}>
+    <div className="flex items-center shadow-2xl gap-1 w-full">
+      
+      {/* Undo / Redo Section */}
+      <div className="flex gap-1.5 px-9">
+        <Undo2
+          className={`w-4 h-4 cursor-pointer ${
+            historyIndex === 0 ? "text-stone-600" : "text-stone-300"
+          }`}
+          onClick={handleUndo}
+        />
+        <Redo2
+          className={`w-4 h-4 cursor-pointer ${
+            historyIndex === history.length - 1 ? "text-stone-600" : "text-stone-300"
+          }`}
+          onClick={handleRedo}
+        />
+      </div>
+
+      {/* Publish Button */}
+      <a onClick={handlePublish} className="flex items-center text-blue-400 cursor-pointer">
+        {isPublishing ? (
+          <>
+            <Loader2 className="mr-2.5 h-4 w-4 animate-spin text-yellow-400" />
+            <div className="text-yellow-400 text-sm font-mono mr-1">Publishing...</div>
+          </>
+        ) : (
+          <div className="text-yellow-400 text-sm border py-1 px-8 border-yellow-400 rounded-sm font-serif mr-4 tracking-widest underline-offset-2">
+            Publish
           </div>
-          <a onClick={handlePublish} className="flex items-center text-blue-400 cursor-pointer">
-            {isPublishing ? (
-              <>
-                <Loader2 className="mr-2.5 h-4 w-4 animate-spin text-yellow-400" />
-                <div className="text-yellow-400 text-sm font-mono mr-1 ">Publishing...</div>
-              </>
-            ) : (
-              <>
-                <div className="text-yellow-400 text-sm border py-1 px-8 border-yellow-400 rounded-sm font-serif mr-4 tracking-widest underline-offset-2">
-                  Publish
-                </div>
-              </>
-            )}
-          </a>
+        )}
+      </a>
+
+      {/* Drawer aligned to right */}
+    <div className="ml-auto" style={{ zoom: 0.6 }}>
+  <Sheet>
+    <SheetTrigger asChild>
+      <Button variant="outline">Open Drawer</Button>
+    </SheetTrigger>
+
+    <SheetContent side="right" className="bg-black border-white/10">
+
+    <VisuallyHidden>
+      <SheetTitle>Hidden Title</SheetTitle>
+    </VisuallyHidden>
+      <div
+        className="
+          items-center gap-2
+          w-full max-w-2xl mx-auto mt-2 px-3 py-1
+          rounded-xl
+          border border-white/10
+          bg-white/5 backdrop-blur-sm
+          shadow-[inset_0_0_12px_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.6)]
+          transition-all
+          focus-within:border-white/25 
+        "
+      >
+        {/* Input */}
+        <input
+          type="text"
+          ref={inputRef}
+          placeholder="Tell us your site idea — name, vibe, what it does..."
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+          onKeyDown={handleKeyPress}
+          disabled={isGenerating}
+          className="
+            flex-1 w-full px-4 py-2
+            bg-transparent text-teal-400 placeholder:text-stone-400
+            tracking-wide
+            border-none outline-none
+            focus:ring-0 focus:placeholder-opacity-0
+            caret-white
+          "
+        />
+
+        {/* Image Tool */}
+        <button
+          type="button"
+          className="
+            flex items-center gap-1 py-2
+            px-2 text-xs text-stone-400
+            bg-black rounded-md
+            hover:border-white/40 hover:bg-white/10
+            transition-all
+          "
+        >
+          <Image className="text-stone-400" height={16} />
+          Image
+        </button>
+
+        {/* Send Button */}
+        <button
+          onClick={handleAIGenerate}
+          disabled={isGenerating || !aiPrompt.trim()}
+          type="button"
+          className="
+            relative flex items-center justify-center
+            h-10 px-8 py-2
+            bg-black text-white
+            border-l border-black
+            rounded-md
+            active:scale-95
+            transition-all duration-100
+            disabled:opacity-50
+          "
+        >
+          {isGenerating ? (
+            <span className="flex items-center gap-2 whitespace-nowrap">
+              <LoadingCircle />
+              <span className="text-sm font-semibold">Generating...</span>
+            </span>
+          ) : (
+            <SendIcon
+              className={`h-4 w-4 ${
+                aiPrompt.length === 0 ? "text-white/40" : "text-white"
+              }`}
+            />
+          )}
+        </button>
+      </div>
+    </SheetContent>
+  </Sheet>
+</div>
+
+
+    
+
+
+
+
+
         </div>
       <AnimatePresence mode="wait">
-  {message && (
-    <motion.div
-      key={message.text}
-      layout   // 🔑 preserves smooth layout shifts
-      initial={{ opacity: 0, y: -20, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.9 }}
-      transition={{
-        type: "spring",
-        stiffness: 120,
-        damping: 16,
-        duration: 0.35,
-      }}
-      className="mt-2"
-    >
-      <Alert
-        variant={message.type === "error" ? "destructive" : "default"}
-        className="bg-black text-white border border-gray-800 rounded-xl shadow-lg flex items-center gap-2 p-3"
-      >
-        {message.type === "success" ? (
-          <CheckCircle className="h-5 w-5 text-green-400" />
-        ) : (
-          <AlertCircle className="h-5 w-5 text-red-400" />
-        )}
+                                              {message && (
+                                                <motion.div
+                                                  key={message.text}
+                                                  layout   // 🔑 preserves smooth layout shifts
+                                                  initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                  exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                                                  transition={{
+                                                    type: "spring",
+                                                    stiffness: 120,
+                                                    damping: 16,
+                                                    duration: 0.35,
+                                                  }}
+                                                  className="mt-2"
+                                                >
+                            <Alert
+                              variant={message.type === "error" ? "destructive" : "default"}
+                              className="bg-black text-white border border-gray-800 rounded-xl shadow-lg flex items-center gap-2 p-3"
+                            >
+                    {message.type === "success" ? (
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-400" />
+                    )}
         <AlertDescription className="text-gray-200 tracking-wide">
           {message.text}
         </AlertDescription>
@@ -517,19 +620,13 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
         {/* Preview Panel */}
         <div className="flex-1 bg-[#030712] border-t border-gray-800 rounded-t-lg">
           <div className="px-4 py-1 flex justify-between">
-            <h2 className="font-bold text-sm tracking-widest text-yellow-400">Preview</h2>
+              <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-red-600 rounded-full"></span>
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                </div>
             <div className="flex items-center gap-1">
-             
-
-              
-      <button onClick={() => setIsOpen(true)} style={{zoom: .9}} className="inline-flex items-center justify-center  align-middle select-none font-sans font-medium text-center transition-all ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm  px-2 shadow-sm bg-transparent relative text-stone-400 hover:bg-stone-700  duration-150  rounded-md  hover:shadow-none antialiased mr-3">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 mr-2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Insert More
-      </button>
-    
-
+      
                <button onClick={() => setIsFullscreenOpen(true)} style={{zoom: .9}} className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm rounded-md  px-2 bg-transparent border-transparent text-stone-400 hover:bg-stone-700 hover:border-stone-100/5 shadow-none hover:shadow-none">
         <span>Maximize</span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 ml-2">
@@ -559,11 +656,8 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
           <div className="border-t border-gray-800 rounded-t-lg px-4 py-1 bg-[#030712]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-600 rounded-full"></span>
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                </div>
+                          <h2 className="font-bold text-xs tracking-widest text-left  text-yellow-400">Editor</h2>
+
                 {nerdMode && (
                   <div className="flex items-center gap-6 ml-4">
                     {["data.js", "index.html", "script.js"].map((tabName) => (
@@ -586,7 +680,7 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
 
 
                <Label htmlFor="nerdmode" className="text-xs mr-2 font-sans font-medium text-serif text-stone-400">
-                  Nerd Mode
+                  Dev Mode
                 </Label>
                 <Switch
                   checked={nerdMode}
@@ -601,14 +695,6 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
                   className="mr-4 data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-yellow-600"
                 />
                 
-
-
-                 <button onClick={() => setIsCodeEditorMaximized(true)} style={{zoom: .9}} className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm rounded-md  px-2 bg-transparent border-transparent text-stone-400 hover:bg-stone-700 hover:border-stone-100/5 shadow-none hover:shadow-none">
-        <span>Maximize</span>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 ml-2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-        </svg>
-      </button>
               </div>
             </div>
           </div>
@@ -687,16 +773,6 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   hasUnsavedChanges={hasUnsavedChanges} // ✅ add this
 />
 
-
-      <InsertButtonModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        selected={selected}
-        setSelected={setSelected}
-        onSubmit={handleInsertSubmit}
-      />
-
- 
 
     </div>
   )

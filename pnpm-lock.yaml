@@ -110,6 +110,9 @@ importers:
       embla-carousel-react:
         specifier: latest
         version: 8.6.0(react@19.0.0)
+      esbuild-wasm:
+        specifier: ^0.25.10
+        version: 0.25.10
       framer-motion:
         specifier: ^12.23.9
         version: 12.23.18(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -1893,6 +1896,11 @@ packages:
 
   es-toolkit@1.39.7:
     resolution: {integrity: sha512-ek/wWryKouBrZIjkwW2BFf91CWOIMvoy2AE5YYgUrfWsJQM2Su1LoLtrw8uusEpN9RfqLlV/0FVNjT0WMv8Bxw==}
+
+  esbuild-wasm@0.25.10:
+    resolution: {integrity: sha512-IyyfrTA2iiOh/uhlaJj0aUDgW42lFhr29ZeKouVNOz/8mLyuqWbEuVst+B4RBH18pb3AcOHnaOgyskAbsVOe3A==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
@@ -5129,6 +5137,8 @@ snapshots:
       is-symbol: 1.1.1
 
   es-toolkit@1.39.7: {}
+
+  esbuild-wasm@0.25.10: {}
 
   escape-string-regexp@4.0.0: {}
 

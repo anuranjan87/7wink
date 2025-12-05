@@ -9,6 +9,8 @@ import { copyTemplateToUser, getAllWebsiteTemplates } from "@/lib/website-action
 import { motion, AnimatePresence } from "framer-motion"
 import mat from "@/asset/mat.gif";
 import { description } from "@/components/chart"
+import { Textarea } from "@/components/ui/textarea"
+
 
 
 
@@ -75,6 +77,82 @@ const templates = [
     imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
     title: "Relaxof",
   },
+    {
+    id: "10",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Relaxof",
+  },
+    {
+    id: "11",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Relaxof",
+  },
+
+   {
+    id: "12",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Relaxof",
+  },
+   {
+    id: "13",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Corporate Skycraper",
+  },
+    {
+    id: "14",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Corporate Skycraper",
+  },
+   {
+    id: "15",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "Booking",
+  },
+  {
+    id: "16",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "k-pop",
+  },
+  {
+    id: "17",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+  {
+    id: "18",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+   {
+    id: "19",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+   {
+    id: "20",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+   {
+    id: "21",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+   {
+    id: "22",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+   {
+    id: "23",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
+  {
+    id: "24",
+    imageSrc: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Artboard%202-7EhoFLYBDcTrCE6L5oSI8c6UEP3NFo.png",
+    title: "my bio",
+  },
 ]
 
 export default function Page({ params }: PageProps) {
@@ -106,7 +184,7 @@ export default function Page({ params }: PageProps) {
     if (data.code_script) {
       combinedHtml = combinedHtml.replace(
         '<script src="script.js"></script>',
-        `<script>\n${data.code_script}\n</script>`,
+        `<script type="text/babel">\n${data.code_script}\n</script>`,
       )
     }
 
@@ -206,230 +284,305 @@ export default function Page({ params }: PageProps) {
 }, [showPreviewModal]);
 
 
-  function TemplateCard({ imageSrc, title, templateId }: { imageSrc: string; title: string; templateId: string }) {
-    const [isHovered, setIsHovered] = useState(false)
-    const isThisTemplateLoading = isNavigating && selectedTemplateId === templateId
-    
+ 
 
-    return (
-      <div
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer transition-all duration-300 ${
-          isThisTemplateLoading ? "scale-105 ring-2 ring-white/50" : ""
-        }`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+function TemplateList() {
+  return (
+    <section className="py-16 px-4 bg-black" style={{ zoom: 0.95 }}>
+      <div className="max-w-screen-xl mx-auto p-5 sm:p-10 md:p-16">
+
+        {/* Header */}
+       <div className={`border-b border-stone-800 mb-12 flex justify-between items-center text-sm 
+     sticky top-0 z-10 bg-black/50 backdrop-blur-sm ${showPreviewModal ? "hidden" : "z-30"}`}>
+
+  {/* Left - Title */}
+  <div className="text-white flex items-center pb-1 pr-4 border-b-2 border-white uppercase tracking-wide">
+    <svg className="h-6 mr-3" viewBox="0 0 455.005 455.005">
+      <path d="M446.158,267.615c-5.622..."></path>
+    </svg>
+    <span className="font-semibold inline-block">All Templates</span>
+  </div>
+
+  {/* Right Tabs */}
+  <div className="flex gap-6 text-white">
+    {["Founder", "Creator", "Job Seeker", "SaaS", "FanPage", "E-Commerce", "Coach"].map((tab) => (
+      <button
+        key={tab}
+        className="hover:text-white transition pb-1  mt-2 border-b-2 border-transparent hover:border-indigo-500"
       >
-        <Image
-          src={imageSrc || "/placeholder.svg"}
-          alt={title}
-          fill
-          className={`object-cover transition-all duration-300 group-hover:scale-105 ${
-            isThisTemplateLoading ? "brightness-75" : ""
-          }`}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-          <h3 className="text-white text-lg font-semibold hidden mb-2">{title}</h3>
-          <Button style={{zoom: .9}}
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-black hover:bg-gray-200 transition-all duration-300 ${
-              isHovered || isThisTemplateLoading ? "opacity-100" : "opacity-0"
-            } flex items-center gap-2 ${isThisTemplateLoading ? "bg-gray-200" : ""}`}
-            aria-label={`Preview ${title} template`}
-            onClick={() => handlePreviewTemplate(templateId)}
-            disabled={isNavigating}
-          >
-            {isThisTemplateLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                LOADING...
-              </>
-            ) : (
-              <>
-                PREVIEW
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    )
-  }
+        {tab}
+      </button>
+    ))}
+  </div>
 
-  function TemplateList() {
-    return (
-      <section className="py-16 px-4 bg-black" style={{ zoom: 0.9 }}>
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-extrabold tracking-tight text-center mb-12">
-            Choose Template
-          </h2>
-     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">
-  {templates.map((template, index) => (
-    <motion.div
-      key={template.id}
-      className="w-full max-w-xs rounded-lg border shadow-sm overflow-hidden bg-black border-stone-800 shadow-stone-900/40"
-      initial={{ opacity: 0, y: 80 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.3 }}
-    >
-      {/* Card Image */}
-      <img
-        src={template.imageSrc}
-        alt={template.title}
-        className="w-[calc(100%-16px)] h-48 object-cover rounded m-2"
-      />
-
-      {/* Card Content */}
-      <div className="w-full h-max rounded px-3.5 py-2.5">
-        <h6 className="font-sans antialiased font-bold text-lg text-white">
-          {template.title}
-        </h6>
-        <p className="font-sans antialiased text-base my-1 text-stone-400">
-          {template.description ?? "This is a short description for the template."}
-        </p>
-      </div>
-
-      {/* Card Footer */}
-      <div className="w-full px-3.5 pt-2 pb-3.5 rounded">
-        <button className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm py-2 px-4 shadow-sm hover:shadow-md  bg-stone-800 hover:bg-stone-700 relative bg-gradient-to-b from-stone-700 to-stone-800 border-stone-900 text-stone-50 rounded-lg hover:bg-gradient-to-b hover:from-stone-800 hover:to-stone-800 hover:border-stone-900 after:absolute after:inset-0 after:rounded-[inherit] after:box-shadow after:shadow-[inset_0_1px_0px_rgba(255,255,255,0.25),inset_0_-2px_0px_rgba(0,0,0,0.35)] after:pointer-events-none transition antialiased" onClick={() => handlePreviewTemplate(template.id)}>
-          Preview
-        </button>
-      </div>
-    </motion.div>
-  ))}
 </div>
 
 
-        </div>
-      </section>
-    )
-  }
-
-  function PreviewModal() {
-    if (!showPreviewModal) return null
-        const currentTemplateData = getCurrentTemplateData()
-
-
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-70 flex items-center justify-center">
-        <div className="bg-gray-900  rounded-lg w-full h-full  flex flex-col">
-          {/* Navbar Strip */}
-          <div style={{zoom: .9}} className="flex items-center justify-between py-4 px-9 border-b border-gray-700 bg-gray-800 rounded-t-lg">
-            <h2 className="text-white text-xl font-bold ">Site Preview</h2>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowConfirmModal(true)}
-                className="bg-white text-black hover:bg-gray-200 flex items-center gap-2"
-                disabled={!currentTemplateData}
-              >
-                Edit This Template
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPreviewModal(false)}
-                className="text-white hover:bg-gray-700"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-hidden px-9" style={{zoom: .8}}>
-            {isLoadingTemplate ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-white" />
-                  <span className="text-white">Loading template preview...</span>
-                </div>
-              </div>
-            ) : templateData  ? (
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-14 px-2">
+          {templates.map((template, index) => (
             <motion.div
-  key={previewTemplateId}          // Ensures animation triggers on each new preview
-  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-  animate={{ opacity: 1, scale: 1, y: 0 }}
-  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-  transition={{ duration: 0.4, ease: "easeOut" }}
-  className="w-full h-full"
->
-  <iframe
-    srcDoc={createCombinedHtml(templateData)}
-    className="w-full h-full border-0 bg-white shadow-lg"
-    title="Template Preview"
-    sandbox="allow-scripts allow-same-origin"
-  />
-</motion.div>
-
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <span className="text-white">No template data available</span>
+              key={template.id}
+              initial={{ opacity: 0, y: 80 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.3 }}
+              className="rounded-xl overflow-hidden shadow-lg flex flex-col bg-stone-900 border border-stone-800 hover:border-stone-700 transition"
+            >
+              {/* Image */}
+              <div className="relative">
+                <img
+                  src={template.imageSrc}
+                  alt={template.title}
+                  className="w-full h-52 object-cover"
+                />
               </div>
-            )}
-          </div>
+
+              {/* Content */}
+              <div className="px-7 py-5 mb-auto">
+                <h3 className="font-medium text-lg text-white hover:text-indigo-500 transition mb-2">
+                  {template.title}
+                </h3>
+
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {template.description ??
+                    "This is a short description for the template."}
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="px-7 py-4 flex items-center justify-between bg-stone-800/70 backdrop-blur-sm">
+
+                {/* Time */}
+                <span className="py-1 text-xs text-gray-300 flex items-center">
+                  <svg height="14" width="14" viewBox="0 0 512 512">
+                    <path fill="white" d="M256,0C114.8..."></path>
+                  </svg>
+                  <span className="ml-1">FREE</span>
+                </span>
+
+                {/* Glass Preview Button */}
+                <button
+                  onClick={() => handlePreviewTemplate(template.id)}
+                  className="
+                    relative inline-flex items-center justify-center 
+                    px-4 py-2 text-white text-xs rounded-lg 
+                    bg-white/5 border border-white/30 backdrop-blur-sm 
+                    shadow-[inset_0_1px_0px_rgba(255,255,255,0.6),0_0_8px_rgba(0,0,0,0.2),0_3px_6px_rgba(0,0,0,0.15)]
+                    hover:bg-white/20 
+                    transition-all duration-300 
+                    before:absolute before:inset-0 before:rounded-lg 
+                    before:bg-gradient-to-br before:from-white/50 before:via-transparent 
+                    before:to-transparent before:opacity-70 before:pointer-events-none
+                    after:absolute after:inset-0 after:rounded-lg 
+                    after:bg-gradient-to-tl after:from-white/20 after:via-transparent 
+                    after:to-transparent after:opacity-40 after:pointer-events-none
+                    antialiased
+                  "
+                >
+                  Preview
+                </button>
+
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
-    )
-  }
+    </section>
+  );
+}
 
-  function ConfirmModal() {
-    if (!showConfirmModal) return null
 
-    return (<AnimatePresence>
- 
-    <motion.div
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
-    >
-      <motion.div
-        className="bg-white rounded-3xl p-8 max-w-md w-full border border-gray-200 shadow-2xl"
-        initial={{ opacity: 0, scale: 0.7, y: 40 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.7, y: 40 }}
-        transition={{
-          type: "spring",
-          stiffness: 200,
-          damping: 18,
-          mass: 0.8
-        }}
-      >
-        <h3 className="text-gray-900 text-2xl font-bold mb-4 text-center">
-          go ahead?
-        </h3>
-        <p className="text-gray-600 mb-8 text-center leading-relaxed">
-         When copied, template shows up for editing, but your old site is kinda gone.
-        </p>
+  function PreviewModal() {
+  if (!showPreviewModal) return null;
+  const currentTemplateData = getCurrentTemplateData();
 
-        <div className="flex gap-3 justify-center">
-          <Button
-            variant="outline"
-            onClick={() => setShowConfirmModal(false)}
-            className="border-gray-300 text-gray-700 hover:bg-gray-100 px-6 py-2 rounded-lg"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmEdit}
-            className="bg-black text-white hover:bg-gray-800 px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            Let’s Go 
-          </Button>
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-lg flex items-center justify-center">
+
+      {/* Outer Container */}
+      <div className="bg-[#101012] rounded-2xl w-full h-full max-w-screen-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden">
+
+        {/* Top Bar */}
+        <div
+          style={{ zoom: 0.85 }}
+          className="flex items-center justify-between px-8 py-4 
+          bg-[#18181B]/80 backdrop-blur-md border-b border-white/10"
+        >
+
+          {/* Window buttons */}
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></span>
+            <span className="w-3 h-3 bg-yellow-400 rounded-full shadow-sm"></span>
+            <span className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+
+            {/* Close */}
+            <button
+              onClick={() => setShowPreviewModal(false)}
+              className="p-2 rounded-lg hover:bg-white/10 transition text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Make It Yours */}
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              disabled={!currentTemplateData}
+              className="
+                relative inline-flex items-center justify-center gap-2
+                px-4 py-2 text-sm font-medium text-white rounded-lg
+                bg-white/5 border border-white/20 backdrop-blur-md
+                shadow-[inset_0_1px_0px_rgba(255,255,255,0.4),0_0_8px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.25)]
+                hover:bg-white/15 transition-all duration-300
+                before:absolute before:inset-0 before:rounded-lg 
+                before:bg-gradient-to-br before:from-white/50 before:via-transparent 
+                before:to-transparent before:opacity-60 before:pointer-events-none
+                disabled:opacity-40 disabled:cursor-not-allowed
+              "
+            >
+              Make It Yours
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+          </div>
         </div>
+
+        {/* Content Area */}
+        <div className="flex-1 px-8 py-2 overflow-hidden" style={{ zoom: 0.8 }}>
+          {isLoadingTemplate ? (
+            <div className="flex items-center justify-center h-full text-white/90">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="ml-2 text-sm">Loading template preview...</span>
+            </div>
+          ) : templateData ? (
+            <motion.div
+              key={previewTemplateId}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full h-full"
+            >
+              <iframe
+                srcDoc={createCombinedHtml(templateData)}
+                className="w-full h-full border-0 rounded-xl bg-white shadow-lg"
+                title="Template Preview"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </motion.div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-white/70">
+              No template data available
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal() {
+  if (!showConfirmModal) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
+        <motion.div
+          className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100"
+          initial={{ opacity: 0, scale: 0.85, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.85, y: 30 }}
+          transition={{
+            type: "spring",
+            stiffness: 180,
+            damping: 16,
+            mass: 0.9
+          }}
+        >
+          {/* ❌ Close Icon */}
+          <button
+            onClick={() => setShowConfirmModal(false)}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Title */}
+          <h3 className="text-gray-900 text-2xl font-bold mb-3 text-center">
+            Go ahead?
+          </h3>
+
+          {/* Description */}
+          <p className="text-gray-600 mb-6 text-center leading-relaxed">
+            When copied, the template opens for editing.  
+            Your old site will no longer stay active.
+          </p>
+
+          {/* Textarea */}
+          <div className="mb-6">
+            <textarea
+             
+              placeholder="Ask anything..."
+              className="px-4 py-3 pb-12 w-full text-gray-900 text-sm 
+                         bg-black/10 border border-black/20 backdrop-blur-sm 
+                         rounded-lg shadow-[inset_0_1px_0px_rgba(0,0,0,0.15),0_3px_8px_rgba(0,0,0,0.1)]
+                         placeholder:text-gray-500 
+                         focus:bg-white/50 focus:outline-none focus:ring-2 focus:ring-black/20
+                         transition-all duration-300 resize-none"
+            ></textarea>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-center gap-3">
+
+            {/* Let’s Go */}
+            <Button
+              onClick={handleConfirmEdit}
+              className="px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-900 shadow-md hover:shadow-lg transition"
+            >
+              Let’s Go
+            </Button>
+
+            {/* Skip (same behavior) */}
+            <Button
+              onClick={handleConfirmEdit}
+              className="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 shadow transition"
+            >
+              Skip
+            </Button>
+
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  
-</AnimatePresence>
+    </AnimatePresence>
+  );
+}
 
 
-    )
-  }
 
   return (
     <div className="bg-[#030712] min-h-screen text-white">
      {isNavigating && (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-white/10 backdrop-blur-md rounded-lg  flex flex-col items-center ">
+        <div className="bg-white/10 backdrop-blur-md   flex flex-col items-center ">
           {/* Show GIF from public folder */}
           <Image src={mat} alt="Loading animation" width={164} height={164} />
 

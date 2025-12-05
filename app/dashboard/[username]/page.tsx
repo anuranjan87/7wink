@@ -15,9 +15,7 @@ export default async function DashboardPage({ params }: PageProps) {
 
   try {
     const visitCount = await getVisitCount(username)
-    console.log("ll")
-    console.log(username)
-        console.log("ll")
+   
 
 
     return (

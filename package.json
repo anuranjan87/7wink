@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@babel/standalone": "^7.28.5",
     "@clerk/nextjs": "^6.32.0",
     "@monaco-editor/react": "latest",
     "@neondatabase/serverless": "latest",
@@ -43,6 +44,7 @@
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "embla-carousel-react": "latest",
+    "esbuild-wasm": "^0.25.10",
     "framer-motion": "^12.23.9",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
