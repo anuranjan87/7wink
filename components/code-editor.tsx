@@ -534,7 +534,7 @@ useEffect(() => {
               active:translate-y-[1px] active:shadow-none
             "
           >
-            Magic Box
+            AI Assistant
           </button>
         </SheetTrigger>
 

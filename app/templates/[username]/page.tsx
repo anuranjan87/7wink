@@ -465,14 +465,9 @@ function PreviewModal() {
                 onClick={() => setIsDraftOpen(true)}
                 className="text-stone-300 px-3 py-1 rounded-lg hover:bg-white/10 transition"
               >
-                <Expand className="h-3 w-3" />
+                <Expand className="h-4 w-4" />
               </button>
-              <button
-                onClick={() => setShowPreviewModal(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+             
               <button
                 onClick={() => setShowConfirmModal(true)}
                 disabled={!currentTemplate}
@@ -480,6 +475,13 @@ function PreviewModal() {
               >
                 Make It Yours
                 <ArrowRight className="w-4 h-4" />
+              </button>
+
+               <button
+                onClick={() => setShowPreviewModal(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition text-white"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
