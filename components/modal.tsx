@@ -9,6 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import dynamic from "next/dynamic"
 import { useState, useEffect, useRef } from "react"
+import { LogType } from "@/components/code-editor"; // make sure the type is imported
+
 
 
 
@@ -58,7 +60,6 @@ export function ModeSwitch({ active, onSwitch }: ModeSwitchProps) {
             : "text-white/50 hover:text-white hover:bg-white/10"
         )}
       >
-        <TentTree className="w-3.5 h-3.5" />
         Preview
       </button>
 
@@ -72,7 +73,6 @@ export function ModeSwitch({ active, onSwitch }: ModeSwitchProps) {
             : "text-white/50 hover:text-white hover:bg-white/10"
         )}
       >
-        <Clapperboard className="w-3.5 h-3.5" />
         Editor
       </button>
     </div>
@@ -492,4 +492,130 @@ export function DraftView({ isOpen, onClose, debouncedContent }: DraftViewProps)
       />
     </div>
   )
+}
+
+
+
+interface HistoryViewProps {
+  isOpen: boolean;
+  onClose: () => void;
+  debouncedContent: string;
+  historyLogs: LogType[] | null;
+    onClick?: (username: string) => Promise<void>; // ✅ add this
+    onRestore: (log: LogType) => void;
+
+
+}
+
+export function HistoryView({ isOpen, onClose, historyLogs, onRestore }: HistoryViewProps) {
+  if (!isOpen) return null;
+
+  const [selectedLog, setSelectedLog] = useState<LogType | null>(null);
+  const [iframeContent, setIframeContent] = useState("");
+
+
+  // 👉 Combine HTML + script + data whenever a log is selected
+  useEffect(() => {
+    if (!selectedLog) return;
+
+    let combinedHTML = selectedLog.code || "";
+
+    combinedHTML = combinedHTML.replace(
+      '<script src="data.js"></script>',
+      `<script>\n${selectedLog.code_data || ""}\n</script>`
+    );
+
+    combinedHTML = combinedHTML.replace(
+      '<script src="script.js"></script>',
+      `<script type="text/babel">\n${selectedLog.code_script || ""}\n</script>`
+    );
+
+    setIframeContent(combinedHTML);
+  }, [selectedLog]);
+
+  return (
+    <div className="fixed inset-0 bg-black z-[900] flex flex-col">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-[910] p-2 bg-white rounded-full shadow-lg border border-black/30 hover:bg-gray-200 transition text-black font-bold"
+      >
+        ✕
+      </button>
+
+
+{/* Restore Button */}
+{selectedLog && (
+  <button
+    onClick={() => onRestore(selectedLog)}
+    className="
+      absolute top-4 left-35 z-[910]
+      px-4 py-1.5 text-xs font-medium
+      rounded-full
+      bg-white/70 text-gray-900 
+      shadow-sm border border-white/30 
+      backdrop-blur-md
+      hover:bg-white/90 hover:shadow
+      transition
+    "
+  >
+    Restore
+  </button>
+)}
+
+
+<div className="flex-1 flex overflow-hidden">
+  {/* Left History Panel */}
+  <div className="
+      w-1/4 
+      bg-gray-800/60 
+      backdrop-blur-xl 
+      text-white 
+      p-4 
+      overflow-auto 
+      border-r border-gray-700/40
+    "
+  >
+    {historyLogs?.length ? (
+      <ul className="space-y-1 text-md pt-12">
+        {historyLogs.map((log) => (
+          <li
+            key={log.id}
+            onClick={() => setSelectedLog(log)}
+            className={`
+              text-center py-2 rounded-lg cursor-pointer
+              transition-all duration-200
+              ${selectedLog?.id === log.id 
+                ? "bg-white/20 border border-white/30 shadow-inner" 
+                : "hover:bg-white/10"
+              }
+            `}
+          >
+            <div className="text-xs text-stone-300">
+              {new Date(log.created_at).toLocaleString()}
+            </div>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-gray-400 text-xs">No history available.</p>
+    )}
+  </div>
+
+
+        {/* Right Content Iframe */}
+        <div className="flex-1 bg-white">
+          {iframeContent ? (
+            <iframe
+              srcDoc={iframeContent}
+              className="w-full h-full border-none"
+            />
+          ) : (
+            <div className="flex items-center justify-center w-full h-full text-gray-500">
+              Select a log to preview
+            </div>
+          )}
+        </div></div>
+    </div>
+  );
 }

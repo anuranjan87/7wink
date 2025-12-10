@@ -175,7 +175,6 @@ export async function getAllWebsiteTemplates() {
       FROM website_template
       ORDER BY id ASC
     `
-    console.log("[v0] All templates fetched:", templates.length)
     return templates
   } catch (error) {
     console.error("Failed to fetch all website templates:", error)
@@ -288,8 +287,7 @@ export async function updateWebsiteContent(username: string, html: string, scrip
 export async function trackVisit(username: string, ipAddress?: string): Promise<void> {
   try {
     const visitsTableName = `${username.toLowerCase()}_visits`
-console.log(ipAddress)
-console.log("hue hue")
+
     // Insert a visit record with IP address
     await sql.query(
       `INSERT INTO ${visitsTableName} (entry, visited_at, ip_address) 
@@ -376,9 +374,7 @@ export async function getVisitCount(username: string): Promise<number> {
   ORDER BY ds.date
   `,
 )
-console.log(username)
-        console.log("username")
-console.log(result)
+
     // Format into chartData array
     return result.map((row: any) => ({
       date: row.date,
@@ -498,37 +494,50 @@ export async function copyTemplateToUser(templateID: number, username: string) {
   }
 }
 
-
 export async function sendEnquiry(username: string, formData: FormData) {
-  const enquiryTableName = `${username}_enquiry`
+  const enquiryTableName = `${username}_enquiry`;
 
-  // Extract values safely
-  const email = formData.get("email") as string
-  const message = formData.get("your_message") as string
+  // Extract email
+  const email = formData.get("email") as string;
 
-  // Format the form data as a single entry string
-  const entryData = `Email: ${email}, Message: ${message}`
+  // Extract messages field as JSON
+  const messagesJson = formData.get("message") as string;
+console.log(messagesJson)
+  // Parse it into an array of objects
+  let messages: Array<{ name: string; value: string }> = [];
+  try {
+    messages = JSON.parse(messagesJson);
+  } catch (err) {
+    console.error("Failed to parse messages JSON:", err);
+  }
 
-  // Insert into the user-specific enquiry table
+  console.log("Email:", email);
+  console.log("Messages:", messages);
+
+  const entryData = {
+    email,
+    messages,
+    submitted_at: new Date().toISOString(),
+  };
+
+  // Insert into DB
   await sql.query(
     `
-    INSERT INTO ${enquiryTableName} (entry)
-    VALUES ($1)
-  `,
-    [entryData],
-  )
+      INSERT INTO ${enquiryTableName} (entry)
+      VALUES ($1)
+    `,
+    [entryData]
+  );
 
-  console.log("Enquiry inserted into database:", {
-    table: enquiryTableName,
-    entry: entryData,
-    timestamp: new Date().toISOString(),
-  })
+  console.log("Enquiry inserted:", { table: enquiryTableName, entry: entryData });
 
   return {
     success: true,
     message: "Enquiry submitted successfully",
-  }
+  };
 }
+
+
 
 export async function getEnquiries(username: string) {
   const enquiryTableName = `${username}_enquiry`;
@@ -536,21 +545,34 @@ export async function getEnquiries(username: string) {
   const rows: any[] = await sql.query(
     `SELECT id, entry, visited_at FROM ${enquiryTableName} ORDER BY visited_at DESC`
   );
-console.log("helloe")
+
   const enquiries = rows.map((row) => {
-    const emailMatch = row.entry.match(/Email:\s*([^,]+)/);
-    const messageMatch = row.entry.match(/Message:\s*([\s\S]*)/);
+    let entryObj;
+
+    // If entry is JSON string, parse it
+    try {
+      entryObj = typeof row.entry === "string" ? JSON.parse(row.entry) : row.entry;
+    } catch {
+      entryObj = {};
+    }
+
+    const messagesArray = Array.isArray(entryObj.messages) ? entryObj.messages : [];
 
     return {
       id: row.id,
-      email: emailMatch ? emailMatch[1].trim() : null,
-      message: messageMatch ? messageMatch[1].trim() : null,
+      email: entryObj.email || null,
+      message: messagesArray
+        .map((m: { name: string; value: string }) => `${m.name}: ${m.value}`)
+        .join(", "),
       created_at: row.visited_at,
+      raw: entryObj,
     };
   });
 
   return enquiries;
 }
+
+
 
 export async function usernameChecker(userId: string): Promise<string | null> {
   try {
@@ -570,3 +592,50 @@ export async function usernameChecker(userId: string): Promise<string | null> {
   }
 }
 
+
+
+export async function handleHistoryClick(username: string) {
+  const tableName = `${username}_website`;
+
+  // Fetch last 3 logs
+  const rows: any[] = await sql.query(
+    `SELECT id, code, code_script, code_data, created_at 
+     FROM ${tableName} 
+     ORDER BY created_at DESC 
+     LIMIT 10`
+  );
+
+  // Format results like your getEnquiries function
+  const logs = rows.map((row) => {
+    let codeObj, scriptObj, dataObj;
+
+    // Try to parse JSON if possible
+    try {
+      codeObj = typeof row.code === "string" ? JSON.parse(row.code) : row.code;
+    } catch {
+      codeObj = row.code;
+    }
+
+    try {
+      scriptObj = typeof row.code_script === "string" ? JSON.parse(row.code_script) : row.code_script;
+    } catch {
+      scriptObj = row.code_script;
+    }
+
+    try {
+      dataObj = typeof row.code_data === "string" ? JSON.parse(row.code_data) : row.code_data;
+    } catch {
+      dataObj = row.code_data;
+    }
+
+    return {
+      id: row.id,
+      code: codeObj,
+      code_script: scriptObj,
+      code_data: dataObj,
+      created_at: row.created_at,
+    };
+  });
+
+  return logs;
+}

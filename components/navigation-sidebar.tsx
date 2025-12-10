@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Globe2Icon, Pickaxe, Gauge, SwatchBook, Recycle } from "lucide-react";
+import Image from "next/image";
+
+import { Globe2Icon, Pickaxe, Gauge, SwatchBook, Recycle, PencilLine, History, Settings, Tally5 } from "lucide-react";
 
 export function NavigationSidebar({ username }: { username: string }) {
   const [loading, setLoading] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function NavigationSidebar({ username }: { username: string }) {
     }`;
 
   return (
-    <aside className="w-10 h-screen border-r border-transparent flex flex-col justify-center items-center gap-12 bg-black">
+    <aside className="w-10 h-screen border-r border-transparent flex flex-col justify-center items-center gap-9 bg-black" style={{zoom: 1}}>
       <a
         href={`/${username}`}
         target="_blank"
@@ -37,7 +39,7 @@ export function NavigationSidebar({ username }: { username: string }) {
         onClick={() => handleClick("edit", `/edit/${username}`)}
         className={linkClasses("edit")}
       >
-        <Pickaxe size={18} strokeWidth={1.5} />
+        <PencilLine size={18} strokeWidth={1.5} />
         <span>{loading === "edit" ? "Loading..." : "Edit"}</span>
       </Link>
 
@@ -46,7 +48,7 @@ export function NavigationSidebar({ username }: { username: string }) {
         onClick={() => handleClick("dash", `/dashboard/${username}`)}
         className={linkClasses("dash")}
       >
-        <Gauge size={18} strokeWidth={1.5} />
+        <Tally5 size={18} strokeWidth={1.5} />
         <span>{loading === "dash" ? "Loading..." : "Dash"}</span>
       </Link>
 
@@ -59,14 +61,10 @@ export function NavigationSidebar({ username }: { username: string }) {
         <span>{loading === "templates" ? "Loading..." : "Template"}</span>
       </Link>
 
-      <a
-        href={`/templates/${username}`}
-        onClick={() => handleClick("restore", `/templates/${username}`)}
-        className={linkClasses("restore")}
-      >
-        <Recycle size={18} strokeWidth={1.5} />
-        <span>{loading === "restore" ? "Loading..." : "Restore"}</span>
-      </a>
+     
+
+
+     
     </aside>
   );
 }

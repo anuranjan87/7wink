@@ -2,9 +2,9 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image, Link} from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image, Link, History} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank } from "@/lib/website-actions"
+import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank, handleHistoryClick as fetchHistoryLogs } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -20,11 +20,19 @@ import {
 } from "@/components/ui/sheet"
 import { insertList } from "@/lib/insertlist"
 import dynamic from "next/dynamic"
-import { FullscreenPreviewModal, DraftView} from "@/components/modal"
+import { FullscreenPreviewModal, DraftView, HistoryView} from "@/components/modal"
 
 import { motion, AnimatePresence } from "framer-motion"
 import { LoadingCircle, SendIcon } from '@/components/icons'
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+// ✅ Define log type
+export type LogType = {
+  id: number;
+  code: any;
+  code_script: any;
+  code_data: any;
+  created_at: string;
+};
 
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -38,27 +46,37 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
 
 const handleEditorMount = (editor: any, monaco: any) => {
   if (!monaco?.editor) return
-  monaco.editor.defineTheme("custom-dark", {
-    base: "vs-dark",
-    inherit: true,
-    rules: [
-      { token: "comment", foreground: "9CA3AF", fontStyle: "italic" }, // softer gray
-      { token: "tag", foreground: "FF79C6" },
-      { token: "delimiter.html", foreground: "f2ecec" },
-      { token: "attribute.name", foreground: "f2ecec" },
-      { token: "attribute.value", foreground: "6fcaf2" },
-      { token: "string", foreground: "E6C76D" }, // softer Apple-style yellow
-      { token: "text", foreground: "6fcaf2" },
-    ],
-    colors: {
-      "editor.background": "#242424",
-      "editor.foreground": "#F8F8F2",
-      "editor.lineHighlightBackground": "#44475A",
-      "editorLineNumber.foreground": "#6272A4",
-      "editorLineNumber.activeForeground": "#F8F8F2",
-    },
-  })
+monaco.editor.defineTheme("custom-dark", {
+  base: "vs-dark",
+  inherit: true,
+  rules: [
+    { token: "comment", foreground: "6B7280", fontStyle: "italic" },  // comments
+    { token: "keyword", foreground: "F1C40F" },                        // const, function, return
+    { token: "identifier", foreground: "DEA193" },                     // function names, variables
+    { token: "number", foreground: "FFAB40" },                          // numbers
+    { token: "string", foreground: "E6C76D" },                          // strings
+    { token: "operator", foreground: "FFFFFF" },                        // operators like =, +, -, etc.
+    { token: "delimiter", foreground: "D4D4D4" },                       // semicolons, brackets
+    { token: "type", foreground: "4EC9B0" },                             // types like boolean, string
+    { token: "function", foreground: "82AAFF" },                        // function declarations
+    { token: "variable", foreground: "9CDCFE" },                        // general variables
+    { token: "text", foreground: "D4D4D4" },                             // default text
+  ],
+  colors: {
+    "editor.background": "#1E1E1E",
+    "editor.foreground": "#D4D4D4",
+    "editor.lineHighlightBackground": "#333842",
+    "editorLineNumber.foreground": "#858585",
+    "editorLineNumber.activeForeground": "#F1C40F",
+    "editorCursor.foreground": "#F1C40F",
+    "editor.selectionBackground": "#264F78",
+    "editor.inactiveSelectionBackground": "#3A3D41",
+  },
+});
+
+
   monaco.editor.setTheme("custom-dark")
+
   const container = editor.getContainerDomNode()
   container.style.borderRadius = "0.50rem"
   container.style.overflow = "hidden"
@@ -72,7 +90,10 @@ export interface CodeEditorProps {
     script: string
     data: string
   }
+
 }
+
+
 
 export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [codeHtml, setCodeHtml] = useState(initialContent.html)
@@ -102,6 +123,10 @@ export function CodeEditor({ username, initialContent }: CodeEditorProps) {
   const [history, setHistory] = useState<string[]>([initialContent.html])
   const [historyIndex, setHistoryIndex] = useState(0)
   const [isDraftOpen, setIsDraftOpen] = useState(false)
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+const [historyLogs, setHistoryLogs] = useState<LogType[] | null>(null);
+
+
 
 
 
@@ -180,6 +205,39 @@ const handleRedo = () => {
 }
 
 
+
+const fetchAndSetHistory = async (username: string) => {
+  try {
+    const logs = await fetchHistoryLogs(username); // fetch logs
+console.log(alert);
+    setHistoryLogs(logs); // set state here
+  } catch (error) {
+    console.error("Error fetching history:", error);
+  }
+};
+
+
+
+
+const handleRestore = (log: LogType) => {
+  // Update editor fields
+  setCodeHtml(log.code || "");
+  setCodescript(log.code_script || "");
+  setCodedata(log.code_data || "");
+
+  // Replace <script> placeholders and update preview
+  let combinedHTML = (log.code || "")
+    .replace('<script src="data.js"></script>', `<script>\n${log.code_data || ""}\n</script>`)
+    .replace('<script src="script.js"></script>', `<script type="text/babel">\n${log.code_script || ""}\n</script>`);
+
+  setDebouncedContent(combinedHTML);
+
+  // Close modal
+  setIsHistoryOpen(false);
+
+  // Mark as manual change so user can save again
+  setIsManualEdit(true);
+};
 
 
 
@@ -514,8 +572,20 @@ useEffect(() => {
   onClick={() => setIsDraftOpen(true)}
   className="text-gray-300"
 >
-  <Link className="w-4 h-4" />
+  <Link className="w-4 h-4 mr-3" />
 </button>
+
+ <button
+  type="button"
+  onClick={() => {
+    setIsHistoryOpen(true);      // open the History panel
+    fetchAndSetHistory(username); // fetch logs
+  }}
+  className="text-gray-300"
+>
+  <History className="w-4 h-4" />
+</button>
+
 
 
     </div>
@@ -526,10 +596,10 @@ useEffect(() => {
         <SheetTrigger asChild>
           <button
             className="
-              bg-yellow-500 text-black 
+              bg-yellow-600 text-black 
               font-bold text-sm px-4 py-1.5 
               rounded-md border-2 border-black
-              hover:bg-yellow-400 transition-all
+              hover:bg-yellow-700 transition-all
               shadow-[0_3px_0px_0px_rgba(0,0,0,0.8)]
               active:translate-y-[1px] active:shadow-none
             "
@@ -538,7 +608,7 @@ useEffect(() => {
           </button>
         </SheetTrigger>
 
-        <SheetContent side="right" className="bg-black border-white/10">
+        <SheetContent side="right" className="bg-black border-white/10 mt-3">
           <VisuallyHidden>
             <SheetTitle>Hidden</SheetTitle>
           </VisuallyHidden>
@@ -705,17 +775,17 @@ useEffect(() => {
           <div className="border-t border-gray-800 rounded-t-lg px-4 py-1 bg-[#030712]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                          <h2 className="font-bold text-xs tracking-widest text-left  text-yellow-400">Editor</h2>
+                          <h2 className="font-light text-xs tracking-widest text-left  text-yellow-400/80">Editor</h2>
 
                 {nerdMode && (
-                  <div className="flex items-center gap-6 ml-4">
+                  <div className="flex items-center absolute left-1/2 -translate-x-1/2 gap-6  text-stone-400">
                     {["data.js", "index.html", "script.js"].map((tabName) => (
                       <button
                         key={tabName}
                         style={{ zoom: 0.8 }}
                         className={cn(
-                          "px-7 py-1 text-xs font-serif tracking-widest rounded-md transition-colors duration-200",
-                          activeTab === tabName ? "bg-[#242424] text-yellow-400" : "text-gray-400 hover:bg-[#242424]",
+                          "px-3   text-xs font-serif tracking-widest rounded-md transition-colors duration-200",
+                          activeTab === tabName ? "bg-[#242424] text-yellow-400" : "text-stone-400 hover:bg-[#242424]",
                         )}
                         onClick={() => setActiveTab(tabName)}
                       >
@@ -770,6 +840,8 @@ useEffect(() => {
                 scrollBeyondLastLine: false,
                 lineNumbers: "on",
                 padding: { top: 10, bottom: 10 },
+
+                stickyScroll: {enabled: false}
               }}
             />
           </div>
@@ -808,6 +880,16 @@ useEffect(() => {
   onClose={() => setIsDraftOpen(false)}
   debouncedContent={debouncedContent}
 />
+
+
+<HistoryView
+  isOpen={isHistoryOpen}
+  onClose={() => setIsHistoryOpen(false)}
+  debouncedContent={debouncedContent}
+  historyLogs={historyLogs}
+  onRestore={handleRestore}   // ✅ ADD THIS
+/>
+
 
 
 

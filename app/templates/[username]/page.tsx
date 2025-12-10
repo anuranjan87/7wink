@@ -310,7 +310,7 @@ function TemplateList() {
 
   {/* Right Tabs */}
   <div className="flex gap-6 text-white">
-    {["Founder", "Creator", "Job Seeker", "SaaS", "FanPage", "E-Commerce", "Coach"].map((tab) => (
+    {["Leads Forms","Start-Up", "SaaS", "E-Commerce"].map((tab) => (
       <button
         key={tab}
         className="hover:text-white transition pb-1  mt-2 border-b-2 border-transparent hover:border-indigo-500"

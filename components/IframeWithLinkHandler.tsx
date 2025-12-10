@@ -26,21 +26,27 @@ export default function IframeWithLinkHandler({
 
       // ✅ ✅ ✅ FINAL FORM HANDLER
       if (event.data.formData) {
-        const { email, message } = event.data.formData
+  const { email, message } = event.data.formData
 
-        console.log("✅ FINAL MESSAGE RECEIVED:", message)
+  console.log("✅ FINAL MESSAGE RECEIVED:", message)
 
-        const formData = new FormData()
-        formData.append("email", email)
-        formData.append("your_message", message)
+  const formData = new FormData()
+  formData.append("email", email)
 
-        try {
-          await sendEnquiry(username, formData)
-          alert("✅ Form submitted successfully!")
-        } catch (error) {
-          alert("❌ Failed to submit form")
-        }
-      }
+  // ❌ WRONG
+  // formData.append("your_message", message)
+
+  // ✅ RIGHT — BACKEND EXPECTS message AS JSON STRING
+  formData.append("message", JSON.stringify(message))
+console.log(formData)
+  try {
+    await sendEnquiry(username, formData)
+    alert("✅ Form submitted successfully!")
+  } catch (error) {
+    alert("❌ Failed to submit form")
+  }
+}
+
     }
 
     window.addEventListener("message", handleMessage)
