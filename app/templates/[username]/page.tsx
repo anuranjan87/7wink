@@ -324,14 +324,14 @@ function TemplateList() {
 
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-14 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-20 px-2">
           {templates.map((template, index) => (
             <motion.div
               key={template.id}
               initial={{ opacity: 0, y: 80 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.3 }}
-              className="rounded-xl overflow-hidden shadow-lg flex flex-col bg-stone-900 border border-stone-800 hover:border-stone-700 transition"
+              className="rounded-3xl overflow-hidden shadow-lg flex flex-col bg-stone-900 border border-stone-800 hover:border-stone-700 transition"
             >
               {/* Image */}
               <div className="relative">
@@ -343,12 +343,12 @@ function TemplateList() {
               </div>
 
               {/* Content */}
-              <div className="px-7 py-5 mb-auto">
-                <h3 className="font-medium text-lg text-white hover:text-indigo-500 transition mb-2">
+              <div className="px-7 py-2 mb-auto">
+                <h3 className="font-medium text-lg text-stone-300 hover:text-indigo-500 transition mt-3">
                   {template.title}
                 </h3>
 
-                <p className="text-gray-400 text-sm leading-relaxed">
+                <p className="text-stone-500 text-xs mt-1 leading-relaxed">
                   {template.description ??
                     "This is a short description for the template."}
                 </p>
@@ -362,7 +362,7 @@ function TemplateList() {
                   <svg height="14" width="14" viewBox="0 0 512 512">
                     <path fill="white" d="M256,0C114.8..."></path>
                   </svg>
-                  <span className="ml-1">FREE</span>
+                  <span className="ml-1 text-stone-400">FREE</span>
                 </span>
 
                 {/* Glass Preview Button */}

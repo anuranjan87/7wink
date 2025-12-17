@@ -2,7 +2,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image, Link, History} from "lucide-react"
+import { Loader2, Send, CheckCircle, AlertCircle, Maximize2, SquarePlus,Plus, Save, Undo2, Redo2, Image, Link, History, Fullscreen} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateWebsiteContent, generateCodeWithAI, generateCodeWithAIBlank, handleHistoryClick as fetchHistoryLogs } from "@/lib/website-actions"
 import { Switch } from "@/components/ui/switch"
@@ -542,12 +542,12 @@ useEffect(() => {
     </button>
 
     {/* Undo / Redo */}
-    <div className="flex items-center gap-2 ml-2">
+    <div className="flex items-center gap-2 ml-4">
       <button
         onClick={handleUndo}
         disabled={historyIndex === 0}
         className={`
-          p-2 rounded-md transition-all 
+           rounded-md transition-all 
           ${historyIndex === 0 ? "text-gray-700" : "text-gray-300 hover:bg-white/10"}
         `}
       >
@@ -572,7 +572,7 @@ useEffect(() => {
   onClick={() => setIsDraftOpen(true)}
   className="text-gray-300"
 >
-  <Link className="w-4 h-4 mr-3" />
+  <Fullscreen className="w-4 h-4 mr-3" />
 </button>
 
  <button
@@ -747,7 +747,7 @@ useEffect(() => {
             <div className="flex items-center gap-1">
       
                <button onClick={() => setIsFullscreenOpen(true)} style={{zoom: .9}} className="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus:shadow-none text-sm rounded-md  px-2 bg-transparent border-transparent text-stone-400 hover:bg-stone-700 hover:border-stone-100/5 shadow-none hover:shadow-none">
-        <span>Maximize</span>
+        <span>Expand</span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4 ml-2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
         </svg>
